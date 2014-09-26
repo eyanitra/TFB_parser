@@ -12,12 +12,16 @@ uint8 TFB_IsCoherence(TFB_PARSER handle, hex *checker)
 	return 0;
 }
 
-STACK_LMN *TFB_nextTag(TFB_PARSER handle)
+TFB_TAG *TFB_nextTag(TFB_PARSER handle)
 {
 	return 0;
 }
 
-uint8 TFB_IsEmpty(TFB_PARSER handle)
+uint8 TFB_isEmpty(TFB_PARSER handle)
 {
 	return 0;
+}
+
+void TFB_close(TFB_PARSER usedHandle){
+	
 }

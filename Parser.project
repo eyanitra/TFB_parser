@@ -98,5 +98,6 @@
     <File Name="VF_file.h"/>
     <File Name="VF_folder.c"/>
     <File Name="VF_folder.h"/>
+    <File Name="printer.c"/>
   </VirtualDirectory>
 </CodeLite_Project>

@@ -1,6 +1,6 @@
 #include "VF_folder.h"
 
-int VF_folderDefaultOpen(VF_FOLDER *folder, str folderName)
+int VF_folderDefaultOpen(VF_FOLDER *folder,const str folderName)
 {
 	return 1;
 }

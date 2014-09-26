@@ -6,9 +6,15 @@ typedef unsigned char hex;
 
 #define VF_FOLDER_TOKEN_LENGTH		32
 
-typedef struct{
+struct vffolder_t{
 	hex token[VF_FOLDER_TOKEN_LENGTH];
-}VF_FOLDER;
+}; 
+
+struct vffolderinfo_t{
+	unsigned long size;
+	unsigned int maxFile;
+	hex mode;
+};
 
 // append file if exist, not erased on reboot, non transferable
 #define PM_DEFAULT			0
@@ -21,13 +27,10 @@ typedef struct{
 // folder from other application
 #define PM_IMPORT			8
 
-typedef struct{
-	unsigned long size;
-	unsigned int maxFile;
-	hex mode;
-}VF_FOLDER_INFO;
+typedef vffolderinfo_t 	VF_FOLDER_INFO;
+typedef vffolder_t 		VF_FOLDER;
 
-int VF_folderDefaultOpen(VF_FOLDER *folder, str folderName);
+int VF_folderDefaultOpen(VF_FOLDER *folder, const str folderName);
 
 int VF_folderActivate(VF_FOLDER folder);
 

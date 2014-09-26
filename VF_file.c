@@ -13,6 +13,7 @@ int VF_open(VF_FOLDER folder, str fileName, VF_FILE *fileHandle, VF_OFFSET *size
 
 int VF_write(const hex *byteIn, int inputByteSize, VF_OFFSET offset,VF_FILE file)
 {
+	
 	return 1;
 }
 

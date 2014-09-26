@@ -3,10 +3,11 @@
 
 #include "VF_folder.h"
 
-typedef struct{
+struct opaquehdl_t{
 	void *rsc;
-}VF_FILE;
+}
 
+typedef opaquehdl_t VF_FILE;
 typedef long VF_OFFSET;
 
 int VF_open(VF_FOLDER folder, str fileName, VF_FILE *fileHandle, VF_OFFSET *size);
