@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 void print8L(char *buffer, int bufferLength)
 {
@@ -10,7 +11,7 @@ void print8L(char *buffer, int bufferLength)
 	for(i = 0, n = 0; i<bufferLength; i++){
 		sprintf(&LineCache[n*3], "%02X ", buffer[i]);
 		if( n == 7 ){
-			Printf(LineCache);
+			printf(LineCache);
 			n = 0;
 			memset(LineCache, 0x00, sizeof(LineCache));
 		}
@@ -19,6 +20,6 @@ void print8L(char *buffer, int bufferLength)
 	}
 	if (n != 0){
 		strcat(LineCache, "\n");
-		Printf(LineCache);
+		printf(LineCache);
 	}
 }

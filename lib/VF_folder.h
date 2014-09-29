@@ -1,19 +1,18 @@
 #ifndef VF_TFB_FOLDER
 #define VF_TFB_FOLDER
 
-typedef unsigned char *str;
-typedef unsigned char hex;
+typedef unsigned char uch;
 
 #define VF_FOLDER_TOKEN_LENGTH		32
 
 struct vffolder_t{
-	hex token[VF_FOLDER_TOKEN_LENGTH];
+	uch token[VF_FOLDER_TOKEN_LENGTH];
 }; 
 
 struct vffolderinfo_t{
 	unsigned long size;
 	unsigned int maxFile;
-	hex mode;
+	uch mode;
 };
 
 // append file if exist, not erased on reboot, non transferable
@@ -27,16 +26,16 @@ struct vffolderinfo_t{
 // folder from other application
 #define PM_IMPORT			8
 
-typedef vffolderinfo_t 	VF_FOLDER_INFO;
-typedef vffolder_t 		VF_FOLDER;
+typedef struct vffolderinfo_t 	VF_FOLDER_INFO;
+typedef struct vffolder_t 		VF_FOLDER;
 
-int VF_folderDefaultOpen(VF_FOLDER *folder, const str folderName);
+int VF_folderDefaultOpen(VF_FOLDER *folder, const char *folderName);
 
 int VF_folderActivate(VF_FOLDER folder);
 
-int VF_folderCreate(const str folderName, const VF_FOLDER_INFO *folderAtribute);
+int VF_folderCreate(const char *folderName, const VF_FOLDER_INFO *folderAtribute);
 
-int VF_folderOpen(VF_FOLDER folder, const str folderName);
+int VF_folderOpen(VF_FOLDER folder, const char *folderName);
 
 int VF_getFolderInfo(VF_FOLDER_INFO *folderAttribute, VF_FOLDER folder);
 

@@ -1,33 +1,44 @@
-#ifndef TFB_PARSER
-#define TFB_PARSER
+#ifndef TAGGED_FILE_PARSER
+#define TAGGED_FILE_PARSER
 
 #include "VF_file.h"
 
 typedef unsigned char uint8;
+typedef void* TFB_REFF;
 
 #define TAG_CLOSING		1
 // TFB_nextTag produce this if one of super tag is closed
-// TAG_CLOSING length always 0
-// TAG_CLOSING reff always 0
+#define TAG_PROLOG		2
+// TFB_nextTag produce this if entering file TLV section, no TLV shall accepted before this tag/inside
 
 struct tfbstack_t{
-	int tag;		// if you find closing tag from TFB_nextTag, one of super tag is closed
-	int length;		// TAG_CLOSING length always 0
-	long reff;		
+	int tag;		
+	int length;		
+	TFB_REFF reff;	// reverence number for read value, or write to file
 };
 
-typedef opaquehdl_t TFB_PARSER;
-typedef tfbstack_t TFB_TAG;
+typedef VF_FILE TFB_PARSER;
+typedef struct tfbstack_t TFB_TAG;
 
-TFB_PARSER TFB_openFile(str fileName,VF_FOLDER folder);
+TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder);
 
-uint8 TFB_IsCoherence(TFB_PARSER handle, hex *checker);	// checker optional
+uint8 TFB_isCoherence(TFB_PARSER handle, uch *checker);	// checker optional
 
 TFB_TAG *TFB_nextTag(TFB_PARSER handle);
 
 uint8 TFB_isEmpty(TFB_PARSER handle);
 
-uint8 TFB_getValue(long reff, hex *outBuffer, int bufferLength);
+uint8 TFB_clearTag(TFB_TAG *reff);
+
+uint8 TFB_getValue(TFB_TAG *reff, uch *outBuffer, int bufferLength);
+
+uint8 TFB_setValue(TFB_TAG *reff, uch *outBuffer, int bufferLength);
+
+TFB_TAG *TFB_setInside(TFB_TAG *reff, int tag, int length, uch *value);
+
+TFB_TAG *TFB_setBefore(TFB_TAG *reff, int tag, int length, uch *value);
+
+TFB_TAG *TFB_setAfter (TFB_TAG *reff, int tag, int length, uch *value);
 
 void TFB_close(TFB_PARSER usedHandle);
 
