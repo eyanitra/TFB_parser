@@ -4,12 +4,13 @@
 #include "VF_file.h"
 
 typedef unsigned char uint8;
-typedef void* TFB_REFF;
+typedef int TFB_REFF;
 
 #define TAG_CLOSING		1
 // TFB_nextTag produce this if one of super tag is closed
 #define TAG_PROLOG		2
 // TFB_nextTag produce this if entering file TLV section, no TLV shall accepted before this tag/inside
+#define TAG_CHECKER     3
 
 struct tfbstack_t{
 	int tag;		
@@ -18,13 +19,14 @@ struct tfbstack_t{
 };
 
 typedef VF_FILE TFB_PARSER;
-typedef struct tfbstack_t TFB_TAG;
+
+typedef struct tfbstack_t TFB_TAG;	//only valid for one use
 
 TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder);
 
-uint8 TFB_isCoherence(TFB_PARSER handle, uch *checker);	// checker optional
+uint8 TFB_isCoherence(TFB_PARSER handle,const uch *checker);	// checker optional
 
-TFB_TAG *TFB_nextTag(TFB_PARSER handle);
+void TFB_nextTag(TFB_PARSER handle, TFB_TAG *nextTag);
 
 uint8 TFB_isEmpty(TFB_PARSER handle);
 

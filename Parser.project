@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="Parser" InternalType="Console">
   <Plugins>
+    <Plugin Name="qmake">
+      <![CDATA[00010001N0005Debug000000000000]]>
+    </Plugin>
     <Plugin Name="CMakePlugin">
       <![CDATA[[{
   "name": "Debug",
@@ -12,9 +15,6 @@
   "arguments": [],
   "parentProject": ""
  }]]]>
-    </Plugin>
-    <Plugin Name="qmake">
-      <![CDATA[00010001N0005Debug000000000000]]>
     </Plugin>
   </Plugins>
   <Description/>
@@ -38,6 +38,8 @@
     <File Name="lib/DSC_converter.c"/>
     <File Name="lib/DSC_converter.h"/>
     <File Name="lib/DSC_hash.h"/>
+    <File Name="lib/TLV_serializer.c"/>
+    <File Name="lib/TLV_serializer.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

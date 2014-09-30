@@ -14,6 +14,20 @@ extern void print8L(char *buffer, int bufferLength);
 #define BLANK_NODE_TAG			7
 #define HEADER_MAX_BYTE			8
 
+uint8 blackListClear()
+{
+	VF_FILE fhd;
+	VF_OFFSET sz;
+	VF_FOLDER fold;
+	uint8 r;
+	
+	r = VF_folderDefaultOpen(&fold,"HOST");
+	r = VF_open(fold,"BNIPP_BL",&fhd,&sz);
+	r = VF_deleteFile(fhd);
+	
+	return !r;
+}
+
 uint8 blackListOpenFile_OK(TFB_PARSER *parser)
 {
 	VF_FOLDER fold;
@@ -29,21 +43,19 @@ uint8 blackListOpenFile_OK(TFB_PARSER *parser)
 	return 1;
 }
 
-// todo BlacklistClear of blackListOpenFile_OK
-
 uint32 blackListGetVersion()
 {
 	uint8 bl[BNI_PPC_NUMBER_BYTE_LEN], found = 0;
-	TFB_TAG *el;
+	TFB_TAG el;
 	TFB_PARSER prs;
 
 	if(!blackListOpenFile_OK(&prs))
 		return 0;
 		 
 	while(!TFB_isEmpty(prs)){
-		el = TFB_nextTag(prs);
-		if(el->tag == BL_VERSION_TAG){
-			TFB_getValue(el, bl, sizeof(bl));
+		TFB_nextTag(prs, &el);
+		if(el.tag == BL_VERSION_TAG){
+			TFB_getValue(&el, bl, sizeof(bl));
 			found = 1;
 			break;
 		}
@@ -62,7 +74,7 @@ uint8 blackListSetVersion(uint32 version)
 {
 	TFB_PARSER blf;
 	uch verbuf[BNI_PPC_NUMBER_BYTE_LEN];
-	TFB_TAG *pr = 0, *now;
+	TFB_TAG pr, now;
 	uint8 wr = 0;
 	
 	if(blackListOpenFile_OK(&blf))
@@ -70,21 +82,21 @@ uint8 blackListSetVersion(uint32 version)
 		
 	dscBinary32ToBcd(version,(BCD_T*)verbuf,BNI_PPC_NUMBER_BYTE_LEN << 1);
 	while(!TFB_isEmpty(blf)){
-		now = TFB_nextTag(blf);
-		if(now->tag == TAG_PROLOG)
+		TFB_nextTag(blf, &now);
+		if(now.tag == TAG_PROLOG)
 			pr = now;
-		if(now->tag == BL_VERSION_TAG){
-			TFB_setValue(now,verbuf,BNI_PPC_NUMBER_BYTE_LEN);
+		if(now.tag == BL_VERSION_TAG){
+			TFB_setValue(&now,verbuf,BNI_PPC_NUMBER_BYTE_LEN);
 			wr = 1;
 			break;
 		}
 	}
 	
 	if(!wr)
-		if(TFB_setAfter(pr,BL_VERSION_TAG, BNI_PPC_NUMBER_BYTE_LEN, verbuf))
-			return 1;
+		if(TFB_setAfter(&pr,BL_VERSION_TAG, BNI_PPC_NUMBER_BYTE_LEN, verbuf))
 	
-	return 0;		
+	TFB_close(blf);		
+	return !wr;		
 }
 
 uint8 blackListIsElementExist(uch cardAppNumber[BNI_PPC_CAN_LEN])
@@ -92,46 +104,47 @@ uint8 blackListIsElementExist(uch cardAppNumber[BNI_PPC_CAN_LEN])
 	uch record[BLS_RECORD_LENGTH];
 	uint8 found = 0;
 	TFB_PARSER prs;
-	TFB_TAG *el;
+	TFB_TAG el;
 	if(!blackListOpenFile_OK(&prs))
 		return 0;
 		
 	while(!TFB_isEmpty(prs)){
-		el = TFB_nextTag(prs);
-		if(el->tag == VALID_NODE_TAG){
-			TFB_getValue(el,record,sizeof(record));
+		TFB_nextTag(prs, &el);
+		if(el.tag == VALID_NODE_TAG){
+			TFB_getValue(&el,record,sizeof(record));
 			if(isRecordedCan((char*)record,(char*)cardAppNumber)){
 				found = 1;
 				break;
 			}
 		}
 	}
+	TFB_close(prs);
 	return found;
 }
 
 uint8 blackListAddRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 {
-	TFB_TAG *t;
+	TFB_TAG t;
 	uch r[BLS_RECORD_LENGTH];
 	uint8 iden = 0;
 	
 	while(!TFB_isEmpty(p)){
-		t = TFB_nextTag(p);
-		if(t->tag == VALID_NODE_TAG){
+		TFB_nextTag(p, &t);
+		if(t.tag == VALID_NODE_TAG){
 			iden = 1;
-			TFB_getValue(t,r,sizeof(r));
+			TFB_getValue(&t,r,sizeof(r));
 			if(isRecordOverlap((char*)r, (char*)rec))
 				return 1;
 			continue;
 		}
-		if((t->tag != VALID_NODE_TAG)&&(iden == 1)){
-			TFB_setBefore(t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
+		if((t.tag != VALID_NODE_TAG)&&(iden == 1)){
+			TFB_setBefore(&t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
 			return 1;
 		}
 	}
 	
-	if(t->tag == BL_VERSION_TAG){
-		TFB_setAfter(t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
+	if(t.tag == BL_VERSION_TAG){
+		TFB_setAfter(&t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
 		return 1;
 	}
 	return 0;
@@ -139,14 +152,14 @@ uint8 blackListAddRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 
 uint8 blackListDeleteRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 {
-	TFB_TAG *t;
+	TFB_TAG t;
 	uch r[BLS_RECORD_LENGTH];
 	while(!TFB_isEmpty(p)){
-		t = TFB_nextTag(p);
-		if(t->tag == VALID_NODE_TAG){
-			TFB_getValue(t,r,sizeof(r));
+		TFB_nextTag(p, &t);
+		if(t.tag == VALID_NODE_TAG){
+			TFB_getValue(&t,r,sizeof(r));
 			if(isRecordOverlap((char*)r,(char*)rec)){
-				return TFB_clearTag(t);
+				return TFB_clearTag(&t);
 			}
 		}
 	}
@@ -166,7 +179,8 @@ uint8 blackListParseLine(uch raw[BLACK_LIST_RECORD_LENGTH])
 		r = blackListAddRecord(prs,record);
 	else
 		r = blackListDeleteRecord(prs, record);
-		
+	
+	TFB_close(prs);
 	return r;
 }
 
