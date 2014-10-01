@@ -3,12 +3,15 @@
 #include "TFB_parser.h"
 #include "BPPblackListRecord.h"
 #include "DSC_converter.h"
+#include "TLV_serializer.h"
 
 typedef int uint32;
 extern void print8L(char *buffer, int bufferLength);
 
 ///////////// outside jurisdiction ///////////
 
+#define PARAM_VERSION_TAG		14
+#define PARAM_DATA_TAG			15
 #define BL_VERSION_TAG			9
 #define VALID_NODE_TAG			11
 #define BLANK_NODE_TAG			7
@@ -192,9 +195,25 @@ void testing()
 	blackListIsElementExist((uch*)"\x01\x02\x03\x04\x05\x06\x07\x08");
 }
 
+void pControlLine(){
+	char lv0[50], *d, lv1[25];
+	int len;
+	
+	d = lv1;
+	d += TLV_writeTlv(0,BL_VERSION_TAG,1,"1",d);
+	d += TLV_writeTlv(0,PARAM_VERSION_TAG,1,"1",d);
+	d += TLV_writeTlv(0,PARAM_DATA_TAG, 1, "1",d);
+	d += TLV_writeTlv(0,VALID_NODE_TAG,1,"0",d);
+	len =  d - lv1;
+	d = lv0;
+	d += TLV_writeTlv(0,TAG_CHECKER,len,lv1,lv0);
+	len = d - lv0;
+	print8L(lv0,len);
+}
 
 int main(int argc, char **argv)
 {
-	testing();
+	pControlLine();
+	//testing();
 	return 0;
 }

@@ -46,6 +46,8 @@ struct tfb_resource{
 	XFILE file;
 	XFIFO fifo;
 	uch *check;
+	unsigned int parent;
+	unsigned int sibling;
 };
 
 typedef struct tfb_resource XRES;
@@ -72,7 +74,7 @@ TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder)
 
 uint8 TFB_isCoherence(TFB_PARSER handle,const uch *checker)
 {
-	XRES *st = (XRES*)handle.rsc;
+	//XRES *st = (XRES*)handle.rsc;
 	
 	// if there is checker save to handle
 	// 	skip checker if present
