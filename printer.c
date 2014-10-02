@@ -23,3 +23,31 @@ void print8L(char *buffer, int bufferLength)
 		printf(LineCache);
 	}
 }
+
+void printCode(char *buffer, int bufferLength){
+	char buf[64], c;
+	int i;
+	FILE* hdl = fopen("CTR.txt","w");
+	
+	if(!hdl){
+		printf("file could not opened");
+		return;
+	}
+	
+	for(i = 0, c = 0; i < bufferLength; ++i){
+		sprintf(&buf[c * 4], "\\x%02X", buffer[i]);
+		++c;
+		if(c >= 7){
+			printf(buf);
+			fprintf(hdl, buf);
+			memset(buf, 0, sizeof(buf));
+			c = 0;
+		}
+	}
+	if(c){
+		strcat(buf, "\n");
+		printf(buf);
+		fprintf(hdl, buf);
+	}
+	fclose(hdl);
+}

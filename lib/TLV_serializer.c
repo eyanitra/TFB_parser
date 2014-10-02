@@ -126,7 +126,7 @@ int TLV_writeTlv(unsigned char tagClass, unsigned int tag, unsigned int length, 
 		return 0;
 	out += sh;
 	memcpy(out, value, length);
-	return (int)(out - tlvBuffer);
+	return (int)(out - tlvBuffer)+ length;
 }
 
 unsigned int TLV_readLength(const char *lengthBuffer, int bufLen)

@@ -7,6 +7,7 @@
 
 typedef int uint32;
 extern void print8L(char *buffer, int bufferLength);
+extern void printCode(char *buffer, int bufferLength);
 
 ///////////// outside jurisdiction ///////////
 
@@ -209,6 +210,7 @@ void pControlLine(){
 	d += TLV_writeTlv(0,TAG_CHECKER,len,lv1,lv0);
 	len = d - lv0;
 	print8L(lv0,len);
+	printCode(lv0, len);
 }
 
 int main(int argc, char **argv)

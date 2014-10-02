@@ -12,8 +12,8 @@
  *  constructed tag's mean you must find another tag inside it
  * 
  * length's rule:
- * - most significant bit in last byte must be 1
- * - if zero, need additional byte 
+ * - if bit7 (most significant bit) in most significant byte is 1 there is extension
+ * - number of extension byte coded in value of binary value bit6 to bit0
  * 
  *
  * author : Evan
