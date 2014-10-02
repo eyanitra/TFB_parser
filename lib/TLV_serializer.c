@@ -129,7 +129,7 @@ int TLV_writeTlv(unsigned char tagClass, unsigned int tag, unsigned int length, 
 	return (int)(out - tlvBuffer)+ length;
 }
 
-unsigned int TLV_readLength(const char *lengthBuffer, int bufLen)
+unsigned int TLV_readLength(const unsigned char *lengthBuffer, int bufLen)
 {
 	unsigned int j = 0, i;
 	if(lengthBuffer[0] < LENGTH_BYTE_BER_1){
@@ -147,7 +147,7 @@ unsigned int TLV_readLength(const char *lengthBuffer, int bufLen)
 	return j;
 }
 
-unsigned int TLV_readTag(const char *tagBuffer, int bufLen)
+unsigned int TLV_readTag(const unsigned char *tagBuffer, int bufLen)
 {
 	unsigned int j = 0;
 	int i;
@@ -161,12 +161,12 @@ unsigned int TLV_readTag(const char *tagBuffer, int bufLen)
 	return j;
 }
 
-int TLV_lengthByte(const char *lengthBuffer, int bufLen)
+int TLV_lengthByte(const unsigned char *lengthBuffer, int bufLen)
 {
 	return (int)(lengthBuffer[0]& 0x7F);
 }
 
-int TLV_tagByte(const char *tagBuffer, int bufLen)
+int TLV_tagByte(const unsigned char *tagBuffer, int bufLen)
 {
 	int i = 1;
 	if((tagBuffer[0] &  SHORT_FORM) == 0)
@@ -178,10 +178,10 @@ int TLV_tagByte(const char *tagBuffer, int bufLen)
 	return i;
 }
 
-int TLV_valueOffset(const char *tlvBuffer, int bufLen)
+int TLV_valueOffset(const unsigned char *tlvBuffer, int bufLen)
 {
 	int l;
-	const char *bf = tlvBuffer;
+	const unsigned char *bf = tlvBuffer;
 	l = TLV_tagByte(bf,bufLen);
 	if(!l)
 		return 0;

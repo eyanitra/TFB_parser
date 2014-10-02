@@ -18,6 +18,8 @@ extern void printCode(char *buffer, int bufferLength);
 #define BLANK_NODE_TAG			7
 #define HEADER_MAX_BYTE			8
 
+uch check[]="\x03\x0C\x09\x01\x31\x0E\x01\x31\x0F\x01\x31\x0B\x01\x30";
+
 uint8 blackListClear()
 {
 	VF_FILE fhd;
@@ -40,7 +42,7 @@ uint8 blackListOpenFile_OK(TFB_PARSER *parser)
 	VF_folderDefaultOpen(&fold,"HOST");
 	prs = TFB_openFile("BNIPP_BL", fold);
 	
-	if(!TFB_isCoherence(prs,0))
+	if(!TFB_isCoherence(prs,check))
 		return 0;
 	
 	memcpy(parser, &prs, sizeof(TFB_PARSER));

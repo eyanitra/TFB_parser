@@ -1,4 +1,5 @@
 #include "TFB_parser.h"
+#include "TLV_serializer.h"
 
 #ifdef _EFT30_
 #	include <SDK30.h>
@@ -72,15 +73,47 @@ TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder)
 	return prs;
 }
 
-uint8 TFB_isCoherence(TFB_PARSER handle,const uch *checker)
+static uint8 TFB_checkerOk(XRES *st, const uch *checker){
+
+	uch *chkB, snoop[16];
+	int sz;
+	unsigned int tag, len, tot;
+
+	if(!checker){
+		chkB = snoop;
+		sz = sizeof(snoop);
+		VF_read(chkB,&sz,0,st->file.hdl);
+	}
+	else
+		chkB = checker;
+
+	tag = TLV_readTag(chkB,sz);
+	if(tag != TAG_CHECKER)
+		return 0;
+	chkB += TLV_tagByte(chkB,sz);
+	len = TLV_readLen(chkB, sz);
+	if(!len)
+		return 0;
+	
+	if(!checker){
+		tot = TLV_tlvByte(tag, len);
+		chkB = (uch*) Z_MALLOC(tot);
+		sz = tot;
+		VF_read(chkB,&sz,0,st->file.hdl);
+		if(sz != tot)
+			return 0;
+	}
+	
+	st->check = chkB;
+	return 1;
+}
+
+uint8 TFB_isCoherence(TFB_PARSER handle, const uch *checker)
 {
-	//XRES *st = (XRES*)handle.rsc;
-	
-	// if there is checker save to handle
-	// 	skip checker if present
-	// else
-	// 	no checker present return 0
-	
+	XRES *st = (XRES*)handle.rsc;
+	if(!TFB_checkerOk(st, checker))
+		return 0;
+
 	// parse file 
 	return 0;
 	
