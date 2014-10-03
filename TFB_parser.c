@@ -23,9 +23,9 @@ struct tfb_info{
 #define ANCESTRY_SIZE	8
 typedef struct tfb_verify ANCESTRY;
 struct tfb_verify{
-	int top;
-	int tag[ANCESTRY_SIZE];
-	ANCESTRY *next;
+	uch *check;				// must copy from file/get from outside
+	VF_OFFSET dSeg;			// offset of data segment
+	unsigned int sibling; 	// last tag
 };
 
 #define EL_ARRY_SIZE	16 
@@ -53,10 +53,8 @@ typedef struct tfb_store XFILE;
 struct tfb_resource{
 	XFILE file;
 	XFIFO fifo;
-	uch *check;
-	int checkLen;
-	ANCESTRY parents;
-	unsigned int sibling;
+	ANCESTRY ancor;
+	
 };
 
 typedef struct tfb_resource XRES;
@@ -75,9 +73,7 @@ TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder)
 		st->file.size = sz;
 		st->file.cur = 0;
 		
-		st->check = 0;
-		
-		memset(&st->parents, 0, sizeof(ANCESTRY));
+		memset(&st->ancor, 0, sizeof(ANCESTRY));
 		
 		st->fifo.size = 0;
 		st->fifo.top = 0;
@@ -119,50 +115,84 @@ static uint8 TFB_checkerOk(XRES *st, const uch *checker){
 		VF_read(chkB,&sz,0,st->file.hdl);
 		if(sz != tot)
 			return 0;
-		st->file.cur += sz;
+		
+		st->ancor.dSeg = TLV_nextTlvOffset(chkB,tot);
 	}
 	
-	st->check = chkB;
+	st->ancor.sibling = TAG_PROLOG;
+	st->ancor.check = chkB;
 	return 1;
+}
+
+static uint8 TFB_isTagFound(XRES *st, unsigned int tag)
+{
+	uint8 found = 0, *lookup;
+	int sk, limit, fTag, cdata, fLen, fVal;
+
+	lookup = st->ancor.check;
+	sk = TLV_valueOffset(lookup, 5);
+	limit = TLV_readLengthFix(lookup, 5);
+	while(limit > sk){
+		fTag = TLV_readTag(&lookup[sk],limit -sk);
+		if(fTag == tag){
+			found = 1;
+			break;
+		}
+		fLen = TLV_readLengthFix(&lookup[sk], limit - sk);
+		if(fLen > 0){
+			fVal = TLV_valueOffset(&lookup[sk], limit - sk);
+			cdata = lookup[fVal];
+			if(fLen > (cdata + 1)){
+				sk += (cdata + fVal + 1);
+				continue;
+			}
+		}
+		sk += TLV_nextTlvOffset(&lookup[sk], limit -sk);
+	}
+	return found;
+}
+
+static uint8 TFB_isTagHasChild(XRES *st, unsigned int tag)
+{
+	// todo redesing control string
+	return 0;
 }
 
 uint8 TFB_isCoherence(TFB_PARSER handle, const uch *checker)
 {
-	uch snoop[8];
-	int sz, sk, limit;
-	unsigned int tag, len;
-	VF_OFFSET ofs;
+	uch snoop[8], nice;
+	int sz;
+	VF_OFFSET off;
+	unsigned int tag;
 	XRES *st = (XRES*)handle.rsc;
+	
 	if(!TFB_checkerOk(st, checker))
 		return 0;
 		
-	// parse tag file
-	sz = sizeof(snoop);
-	VF_read(snoop,&sz, st->file.cur,st->file.hdl);
-	if(sz == 0)
-		return 0; // can't read
-	tag = TLV_readTag(snoop,sz);
-	if(tag == 0)
-		return 0; // not tlv
-	
-	// parse checker
-	sk = TLV_valueOffset(st->check, 5);
-	limit = TLV_readLengthFix(st->check, 5);
-	while(limit > sk){
-		TLV_readTag(&st->check[sk],limit-sk);
-		// put tag to ver
-		TLV_valueOffset(&st->check[sk],limit -sk);
-		// check CDATA
-		sk += TLV_nextTlvOffset(&st->check[sk], limit -sk);
-	}
-	// compare checker vs tag
-	
-	// if accepted put to block
-	
-	return 0;
+	nice = 1;
+	for(off = st->file.cur; off < st->file.size; ){
+		sz = sizeof(snoop);
+		if(VF_read(snoop,&sz, off,st->file.hdl))
+			break;
+		if(sz > 0){		
+			tag = TLV_readTag(snoop,sz);
+			if(TFB_isTagFound(st, tag)){
+				if(TFB_isTagHasChild(st, tag))
+					off += TLV_valueOffset(snoop, sz);
+				else
+					off += TLV_nextTlvOffset(snoop, sz);
+			}
+			else{
+				nice = 0;
+				break;
+			}
+		}
+		else break;
+	} 
+	return nice;
 }
 
-static BLOCK *TFB_parseFile(XRES *resource, BLOCK *lastBlock)
+static BLOCK *TFB_fillBuffer(XRES *resource, XFIFO *buffer)
 {
 	// if file handle blank return 0
 	// read first tag from file offset
@@ -177,14 +207,13 @@ void TFB_nextTag(TFB_PARSER handle, TFB_TAG *nT)
 	BLOCK *blk;
 	int cap;
 	XRES *st = (XRES*)handle.rsc;
-	if((!st)||(!st->fifo.block))
+	
+	if((!st)||(st->ancor.check == 0))
 		return;
 		
-	cap = st->fifo.top;
-	for(blk = st->fifo.block ; blk&&(blk->top < cap); blk = blk->next){
-		if(blk->next == 0)
-			blk->next = TFB_parseFile(st, blk);
-	}
+	// if buffer is not empty return tag
+	// read file and fill buffer 
+	// 
 	
 	if(blk == 0)
 		return;
@@ -199,11 +228,17 @@ void TFB_nextTag(TFB_PARSER handle, TFB_TAG *nT)
 uint8 TFB_isEmpty(TFB_PARSER handle)
 {
 	XRES *st = (XRES*)handle.rsc;
-	if((!st)||(!st->fifo.block))
-		return 1;
-	if(st->fifo.top < st->fifo.size)
-		return 0;
-	return 1;
+	if(!st)
+		return 1;	// no handle
+	if(st->ancor.check == 0)
+		return 1;	// no lookup
+	if(st->file.size <= 0)
+		return 1;	// file blank
+	if(st->file.cur >= st->file.size)
+		return 1;   // file need to be reparsed
+		
+	// todo if buffer empty reread file to fill it
+	return 0;
 }
 
 uint8 TFB_clearTag(TFB_TAG *reff)

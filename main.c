@@ -202,11 +202,12 @@ void pControlLine(){
 	char lv0[50], *d, lv1[25];
 	int len;
 	
+	// \x01 --> there 1 byte info are additional info before tag 
 	d = lv1;
-	d += TLV_writeTlv(0,BL_VERSION_TAG,1,"1",d);
-	d += TLV_writeTlv(0,PARAM_VERSION_TAG,1,"1",d);
-	d += TLV_writeTlv(0,PARAM_DATA_TAG, 1, "1",d);
-	d += TLV_writeTlv(0,VALID_NODE_TAG,1,"0",d);
+	d += TLV_writeTlv(0,BL_VERSION_TAG,0," ",d);
+	d += TLV_writeTlv(0,PARAM_VERSION_TAG,0," ",d);
+	d += TLV_writeTlv(0,PARAM_DATA_TAG, 0," ",d);
+	d += TLV_writeTlv(0,VALID_NODE_TAG,2,"\x01\x1",d);
 	len =  d - lv1;
 	d = lv0;
 	d += TLV_writeTlv(0,TAG_CHECKER,len,lv1,lv0);
