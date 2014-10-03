@@ -83,7 +83,7 @@ int TLV_writeTag(unsigned char tagClass, unsigned int tag, char *tagBuffer)
 	return 5;
 }
 
-int TVL_tlvByte(unsigned int tag, unsigned int length)
+int TLV_tlvByte(unsigned int tag, unsigned int length)
 {
 	int len = length;
 	if(tag < TAG_BYTE_BER_1)
@@ -147,6 +147,15 @@ unsigned int TLV_readLength(const unsigned char *lengthBuffer, int bufLen)
 	return j;
 }
 
+unsigned int TLV_readLengthFix(const unsigned char *tlvBuffer, int bufLen)
+{
+	int skip;
+	skip = TLV_tagByte(tlvBuffer, bufLen);
+	if(skip == 0)
+		return 0;
+	return TLV_readLength(&tlvBuffer[skip], bufLen- skip);
+}
+
 unsigned int TLV_readTag(const unsigned char *tagBuffer, int bufLen)
 {
 	unsigned int j = 0;
@@ -181,13 +190,20 @@ int TLV_tagByte(const unsigned char *tagBuffer, int bufLen)
 int TLV_valueOffset(const unsigned char *tlvBuffer, int bufLen)
 {
 	int l;
-	const unsigned char *bf = tlvBuffer;
-	l = TLV_tagByte(bf,bufLen);
-	if(!l)
+	l = TLV_tagByte(tlvBuffer, bufLen);
+	if(l == 0)
 		return 0;
-	bf += l;
-	l = TLV_lengthByte(bf,bufLen - l);
-	if(!l)
+	l += TLV_lengthByte(&tlvBuffer[l],bufLen - l);
+	return l;
+}
+
+int TLV_nextTlvOffset(const unsigned char *tlvBuffer, int bufLen){
+
+	int skip, l;
+	skip = TLV_tagByte(tlvBuffer, bufLen);
+	if(skip == 0)
 		return 0;
-	return (int)(bf - tlvBuffer)+ l;
+	l = TLV_readLength(&tlvBuffer[skip], bufLen- skip);
+	skip += TLV_lengthByte(&tlvBuffer[skip], bufLen - skip);
+	return l + skip;
 }

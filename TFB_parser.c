@@ -20,8 +20,15 @@ struct tfb_info{
 	VF_OFFSET off;
 };
 
-#define EL_ARRY_SIZE	16 
+#define ANCESTRY_SIZE	8
+typedef struct tfb_verify ANCESTRY;
+struct tfb_verify{
+	int top;
+	int tag[ANCESTRY_SIZE];
+	ANCESTRY *next;
+};
 
+#define EL_ARRY_SIZE	16 
 typedef struct tfb_page BLOCK;
 struct tfb_page{
 	int top;	// last valid element 0,1,... 
@@ -47,7 +54,8 @@ struct tfb_resource{
 	XFILE file;
 	XFIFO fifo;
 	uch *check;
-	unsigned int parent;
+	int checkLen;
+	ANCESTRY parents;
 	unsigned int sibling;
 };
 
@@ -66,7 +74,16 @@ TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder)
 		st->file.hdl = file;
 		st->file.size = sz;
 		st->file.cur = 0;
-		memset(&st->fifo, 0, sizeof(XFIFO));
+		
+		st->check = 0;
+		
+		memset(&st->parents, 0, sizeof(ANCESTRY));
+		
+		st->fifo.size = 0;
+		st->fifo.top = 0;
+		st->fifo.block =(BLOCK*) Z_MALLOX(sizeof(BLOCK));
+		memset(&st->fifo.block, 0, sizeof(BLOCK));
+		
 		prs.rsc = st;
 	}
 	
@@ -75,7 +92,7 @@ TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder)
 
 static uint8 TFB_checkerOk(XRES *st, const uch *checker){
 
-	uch *chkB, snoop[16];
+	uch *chkB, snoop[8];
 	int sz;
 	unsigned int tag, len, tot;
 
@@ -85,23 +102,24 @@ static uint8 TFB_checkerOk(XRES *st, const uch *checker){
 		VF_read(chkB,&sz,0,st->file.hdl);
 	}
 	else
-		chkB = checker;
+		chkB = (uch*)checker;
 
 	tag = TLV_readTag(chkB,sz);
 	if(tag != TAG_CHECKER)
 		return 0;
 	chkB += TLV_tagByte(chkB,sz);
-	len = TLV_readLen(chkB, sz);
+	len = TLV_readLengthFix(chkB, sz);
 	if(!len)
 		return 0;
 	
 	if(!checker){
 		tot = TLV_tlvByte(tag, len);
-		chkB = (uch*) Z_MALLOC(tot);
+		chkB = (uch*) Z_MALLOX(tot);
 		sz = tot;
 		VF_read(chkB,&sz,0,st->file.hdl);
 		if(sz != tot)
 			return 0;
+		st->file.cur += sz;
 	}
 	
 	st->check = chkB;
@@ -110,17 +128,47 @@ static uint8 TFB_checkerOk(XRES *st, const uch *checker){
 
 uint8 TFB_isCoherence(TFB_PARSER handle, const uch *checker)
 {
+	uch snoop[8];
+	int sz, sk, limit;
+	unsigned int tag, len;
+	VF_OFFSET ofs;
 	XRES *st = (XRES*)handle.rsc;
 	if(!TFB_checkerOk(st, checker))
 		return 0;
-
-	// parse file 
-	return 0;
+		
+	// parse tag file
+	sz = sizeof(snoop);
+	VF_read(snoop,&sz, st->file.cur,st->file.hdl);
+	if(sz == 0)
+		return 0; // can't read
+	tag = TLV_readTag(snoop,sz);
+	if(tag == 0)
+		return 0; // not tlv
 	
+	// parse checker
+	sk = TLV_valueOffset(st->check, 5);
+	limit = TLV_readLengthFix(st->check, 5);
+	while(limit > sk){
+		TLV_readTag(&st->check[sk],limit-sk);
+		// put tag to ver
+		TLV_valueOffset(&st->check[sk],limit -sk);
+		// check CDATA
+		sk += TLV_nextTlvOffset(&st->check[sk], limit -sk);
+	}
+	// compare checker vs tag
+	
+	// if accepted put to block
+	
+	return 0;
 }
 
 static BLOCK *TFB_parseFile(XRES *resource, BLOCK *lastBlock)
 {
+	// if file handle blank return 0
+	// read first tag from file offset
+	// search it in checker
+	// if not found -- return 0
+	// if found compare checker stack vs current stack
 	return 0;
 }
 

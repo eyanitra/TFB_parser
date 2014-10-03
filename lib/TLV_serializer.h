@@ -29,11 +29,13 @@ int TLV_writeTag(unsigned char tagClass, unsigned int classlessTag, char *tagBuf
 int TLV_writeTlv(unsigned char tagClass, unsigned int classlessTag, unsigned int length, const char *value, char *tlvBuffer);
 
 unsigned int TLV_readLength(const unsigned char *lengthBuffer, int bufLen);
+unsigned int TLV_readLengthFix(const unsigned char *tlvBuffer, int bufLen);
 unsigned int TLV_readTag(const unsigned char *tagBuffer, int bufLen);
 
 int TLV_lengthByte(const unsigned char *lengthBuffer, int bufLen);
 int TLV_tagByte(const unsigned char *tagBuffer, int bufLen);
-int TVL_tlvByte(unsigned int classlessTag, unsigned int length);
+int TLV_tlvByte(unsigned int classlessTag, unsigned int length);
 int TLV_valueOffset(const unsigned char *tlvBuffer, int bufLen);
+int TLV_nextTlvOffset(const unsigned char *tlvBuffer, int bufLen);
  
  #endif
