@@ -1,5 +1,6 @@
 #include "TFB_parser.h"
 #include "TLV_serializer.h"
+#include "CB_cbuffer.h"
 
 #ifdef _EFT30_
 #	include <SDK30.h>
@@ -14,34 +15,26 @@
 #endif
 
 
+
+// do not implement yet
+#define ANCESTRY_SIZE	8
+
+struct tfb_verify{
+	uch *check;				// must copy from file/get from outside
+	VF_OFFSET dSeg;			// offset of data segment
+	//do not implement yet
+	unsigned int sibling; 	// last tag with same parent
+	unsigned int parent;	// last tag as parent
+};
+typedef struct tfb_verify ANCESTRY;
+
+#define FIFO_SIZE	16 
 struct tfb_info{
 	int tag;
 	int length;
 	VF_OFFSET off;
 };
-
-#define ANCESTRY_SIZE	8
-typedef struct tfb_verify ANCESTRY;
-struct tfb_verify{
-	uch *check;				// must copy from file/get from outside
-	VF_OFFSET dSeg;			// offset of data segment
-	unsigned int sibling; 	// last tag
-};
-
-#define EL_ARRY_SIZE	16 
-typedef struct tfb_page BLOCK;
-struct tfb_page{
-	int top;	// last valid element 0,1,... 
-	struct tfb_info array[EL_ARRY_SIZE];
-	BLOCK *next;
-};
-
-struct tfb_fifo{
-	int top;
-	int size;
-	BLOCK *block;
-};
-typedef struct tfb_fifo XFIFO;
+typedef struct tfb_info L_FIFO;
 
 struct tfb_store{
 	VF_FILE hdl;
@@ -52,9 +45,8 @@ typedef struct tfb_store XFILE;
 
 struct tfb_resource{
 	XFILE file;
-	XFIFO fifo;
+	CB_HDL fifo;
 	ANCESTRY ancor;
-	
 };
 
 typedef struct tfb_resource XRES;
@@ -74,11 +66,7 @@ TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder)
 		st->file.cur = 0;
 		
 		memset(&st->ancor, 0, sizeof(ANCESTRY));
-		
-		st->fifo.size = 0;
-		st->fifo.top = 0;
-		st->fifo.block =(BLOCK*) Z_MALLOX(sizeof(BLOCK));
-		memset(&st->fifo.block, 0, sizeof(BLOCK));
+		st->fifo = CB_create(FIFO_SIZE, sizeof(L_FIFO));
 		
 		prs.rsc = st;
 	}
@@ -97,8 +85,10 @@ static uint8 TFB_checkerOk(XRES *st, const uch *checker){
 		sz = sizeof(snoop);
 		VF_read(chkB,&sz,0,st->file.hdl);
 	}
-	else
+	else{
 		chkB = (uch*)checker;
+		st->ancor.dSeg = 0;
+	}
 
 	tag = TLV_readTag(chkB,sz);
 	if(tag != TAG_CHECKER)
@@ -119,15 +109,14 @@ static uint8 TFB_checkerOk(XRES *st, const uch *checker){
 		st->ancor.dSeg = TLV_nextTlvOffset(chkB,tot);
 	}
 	
-	st->ancor.sibling = TAG_PROLOG;
 	st->ancor.check = chkB;
 	return 1;
 }
 
-static uint8 TFB_isTagFound(XRES *st, unsigned int tag)
+static int TFB_findTag(XRES *st, unsigned int tag)
 {
 	uint8 found = 0, *lookup;
-	int sk, limit, fTag, cdata, fLen, fVal;
+	int sk, limit, fTag; // cdata, fLen, fVal;
 
 	lookup = st->ancor.check;
 	sk = TLV_valueOffset(lookup, 5);
@@ -138,6 +127,8 @@ static uint8 TFB_isTagFound(XRES *st, unsigned int tag)
 			found = 1;
 			break;
 		}
+		/* 
+		// disable reading CDATA
 		fLen = TLV_readLengthFix(&lookup[sk], limit - sk);
 		if(fLen > 0){
 			fVal = TLV_valueOffset(&lookup[sk], limit - sk);
@@ -146,83 +137,103 @@ static uint8 TFB_isTagFound(XRES *st, unsigned int tag)
 				sk += (cdata + fVal + 1);
 				continue;
 			}
-		}
+		}*/
 		sk += TLV_nextTlvOffset(&lookup[sk], limit -sk);
 	}
-	return found;
+	if(found)
+		return sk;
+	return 0;
 }
 
-static uint8 TFB_isTagHasChild(XRES *st, unsigned int tag)
+static uint8 TFB_isTagHasChild(XRES *st, unsigned int tag, int findInfo)
 {
-	// todo redesing control string
+	unsigned int tE, lE;
+	lE =  TLV_readLengthFix(st->ancor.check,findInfo);
+	tE = TLV_readTag(&st->ancor.check[findInfo],lE);
+	if(tE != tag)
+		return 0;
+	if(TLV_readLengthFix(&st->ancor.check[findInfo], lE - findInfo) > 0)
+		return 1;
 	return 0;
+}
+
+static uint8 TFB_isParseable(XRES *st)
+{
+	uch snoop[8], nice;
+	int sz, tagInfo;
+	VF_OFFSET off;
+	unsigned int tag;
+	
+	sz = sizeof(snoop);
+	if(VF_read(snoop,&sz, 0,st->file.hdl))
+		return 0;	// unreadable
+	
+	if(TLV_readTag(snoop, sz) == TAG_CHECKER)
+		off = TLV_nextTlvOffset(snoop, sz);
+	else
+		off = 0;
+		
+		nice = 1;
+	for(st->file.cur = off; off < st->file.size; ){
+		sz = sizeof(snoop);
+		if(VF_read(snoop,&sz, off,st->file.hdl))
+			break;	// file end
+		if(sz > 0){		
+			tag = TLV_readTag(snoop,sz);
+			tagInfo = TFB_findTag(st, tag);
+			if(tagInfo > 0){
+				if(TFB_isTagHasChild(st, tag, tagInfo)){
+					off += TLV_valueOffset(snoop, sz);
+					// todo put inspection tree implementation here
+				}
+				else
+					off += TLV_nextTlvOffset(snoop, sz);
+			}
+			else{
+				nice = 0; // tag not registered
+				break;
+			}
+		}
+		else break;
+	}
+	
+	return nice;
 }
 
 uint8 TFB_isCoherence(TFB_PARSER handle, const uch *checker)
 {
-	uch snoop[8], nice;
-	int sz;
-	VF_OFFSET off;
-	unsigned int tag;
 	XRES *st = (XRES*)handle.rsc;
 	
 	if(!TFB_checkerOk(st, checker))
 		return 0;
 		
-	nice = 1;
-	for(off = st->file.cur; off < st->file.size; ){
-		sz = sizeof(snoop);
-		if(VF_read(snoop,&sz, off,st->file.hdl))
-			break;
-		if(sz > 0){		
-			tag = TLV_readTag(snoop,sz);
-			if(TFB_isTagFound(st, tag)){
-				if(TFB_isTagHasChild(st, tag))
-					off += TLV_valueOffset(snoop, sz);
-				else
-					off += TLV_nextTlvOffset(snoop, sz);
-			}
-			else{
-				nice = 0;
-				break;
-			}
-		}
-		else break;
-	} 
-	return nice;
+	return TFB_isParseable(st);
 }
 
-static BLOCK *TFB_fillBuffer(XRES *resource, XFIFO *buffer)
+static uint8 TFB_fillBuffOk(XRES *st)
 {
-	// if file handle blank return 0
-	// read first tag from file offset
-	// search it in checker
-	// if not found -- return 0
-	// if found compare checker stack vs current stack
+	// check file offset if fresh, put TAG_PROLOG -> TAG_CHECKER offset
+	// read file successive 
+	// fill buffer to its full ness
 	return 0;
 }
 
 void TFB_nextTag(TFB_PARSER handle, TFB_TAG *nT)
 {
-	BLOCK *blk;
-	int cap;
 	XRES *st = (XRES*)handle.rsc;
+	L_FIFO dTag;
 	
-	if((!st)||(st->ancor.check == 0))
+	if(!st)
 		return;
-		
-	// if buffer is not empty return tag
-	// read file and fill buffer 
-	// 
-	
-	if(blk == 0)
-		return;
-	++st->fifo.top;
-	
-	nT->reff = cap;
-	cap -= blk->top;
-	nT->length = blk->array[cap].length;
-	nT->tag = blk->array[cap].tag;
+	memset(nT, 0, sizeof(TFB_TAG));
+	if(CB_isEmpty(&st->fifo)){
+		if(!TFB_fillBuffOk(st))
+			return;
+	}
+	CB_getElement(&st->fifo, &dTag);
+	nT->length = dTag.length;
+	nT->reff   = dTag.off;
+	nT->tag    = dTag.tag;
 }
 
 uint8 TFB_isEmpty(TFB_PARSER handle)
@@ -230,14 +241,10 @@ uint8 TFB_isEmpty(TFB_PARSER handle)
 	XRES *st = (XRES*)handle.rsc;
 	if(!st)
 		return 1;	// no handle
-	if(st->ancor.check == 0)
-		return 1;	// no lookup
-	if(st->file.size <= 0)
-		return 1;	// file blank
-	if(st->file.cur >= st->file.size)
-		return 1;   // file need to be reparsed
-		
-	// todo if buffer empty reread file to fill it
+	if(CB_isEmpty(&st->fifo)){
+		if(!TFB_fillBuffOk(st))
+			return 1;
+	}
 	return 0;
 }
 
