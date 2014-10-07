@@ -8,7 +8,7 @@
 #define LAST_LENGTH			0x80
 
 
-int TLV_writeLength(unsigned int length, char *lengthBuffer)
+int TLV_writeLength(unsigned int length, unsigned char *lengthBuffer)
 {
 	if(length < LENGTH_BYTE_BER_1){
 		lengthBuffer[0] = length;
@@ -49,7 +49,7 @@ int TLV_writeLength(unsigned int length, char *lengthBuffer)
 #define FIRST_MASK			(SHORT_FORM | 0x0F)
 #define EXT_MASK			0x7F
 
-int TLV_writeTag(unsigned char tagClass, unsigned int tag, char *tagBuffer)
+int TLV_writeTag(unsigned char tagClass, unsigned int tag, unsigned char *tagBuffer)
 {
 	tagClass &= CLASS_MASK;
 	if(tag < TAG_BYTE_BER_1){
@@ -111,10 +111,12 @@ int TLV_tlvByte(unsigned int tag, unsigned int length)
 	return len;
 }
 
-int TLV_writeTlv(unsigned char tagClass, unsigned int tag, unsigned int length, const char *value, char *tlvBuffer)
+int TLV_writeTlv(unsigned char tagClass, unsigned int tag, unsigned int length, 
+	const unsigned char *value, 
+	unsigned char *tlvBuffer)
 {
 	int sh;
-	char *out;
+	unsigned char *out;
 	
 	out = tlvBuffer;
 	sh = TLV_writeTag(tagClass, tag,out);

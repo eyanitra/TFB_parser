@@ -212,15 +212,50 @@ uint8 TFB_isCoherence(TFB_PARSER handle, const uch *checker)
 
 static uint8 TFB_fillBuffOk(XRES *st)
 {
-	// check file offset if fresh, put TAG_PROLOG -> TAG_CHECKER offset
-	// read file successive 
-	// fill buffer to its full ness
-	return 0;
+	uch snoop[8];
+	int sz, tagInfo;
+	L_FIFO tld;
+	unsigned int tag;
+	
+	if((st->file.cur == 0)&& CB_isEmpty(&st->fifo)){
+		tld.tag = TAG_CHECKER;
+		tld.length = 0;
+		tld.off = st->ancor.dSeg;
+		CB_addElement(&st->fifo,&tld);
+	}
+	
+	while(!CB_isFull(&st->fifo)){
+		sz = sizeof(snoop);
+		VF_read(snoop,&sz,st->file.cur,st->file.hdl);
+		if(sz == 0)
+			break;
+		tag = TLV_readTag(snoop, sz);
+		if(tag == TAG_CHECKER){
+			st->file.cur += TLV_nextTlvOffset(snoop, sz);
+			continue;
+		}
+		
+		tagInfo = TFB_findTag(st, tag);
+		if(tagInfo > 0){
+			tld.tag = tag;
+			tld.length = TLV_readLengthFix(snoop,sz);
+			tld.off = st->file.cur;
+			CB_addElement(&st->fifo, &tld);
+		}
+		else return 0;
+		
+		if(TFB_isTagHasChild(st, tag, tagInfo))
+			st->file.cur += TLV_valueOffset(snoop, sz);
+		else
+			st->file.cur += TLV_nextTlvOffset(snoop, sz);
+	}
+
+	return 1;
 }
 
-void TFB_nextTag(TFB_PARSER handle, TFB_TAG *nT)
+void TFB_nextTag(TFB_PARSER hd, TFB_TAG *nT)
 {
-	XRES *st = (XRES*)handle.rsc;
+	XRES *st = (XRES*)hd.rsc;
 	L_FIFO dTag;
 	
 	if(!st)
@@ -236,9 +271,9 @@ void TFB_nextTag(TFB_PARSER handle, TFB_TAG *nT)
 	nT->tag    = dTag.tag;
 }
 
-uint8 TFB_isEmpty(TFB_PARSER handle)
+uint8 TFB_isEmpty(TFB_PARSER hd)
 {
-	XRES *st = (XRES*)handle.rsc;
+	XRES *st = (XRES*)hd.rsc;
 	if(!st)
 		return 1;	// no handle
 	if(CB_isEmpty(&st->fifo)){
@@ -248,36 +283,105 @@ uint8 TFB_isEmpty(TFB_PARSER handle)
 	return 0;
 }
 
-uint8 TFB_clearTag(TFB_TAG *reff)
+uint8 TFB_clearTag(TFB_PARSER hdl, TFB_TAG *reff)
 {
 	return 0;
 }
 
-uint8 TFB_getValue(TFB_TAG *reff, uch *outBuffer, int bufferLength)
+uint8 TFB_getValue(TFB_PARSER hdl, TFB_TAG *reff, uch *outBuffer, int bfLength)
 {
+	uch snoop[8];
+	int sz;
+	XRES *st = (XRES*)hdl.rsc;
+
+	sz = sizeof(snoop);
+	VF_read(snoop,&sz,reff->reff,st->file.hdl);	// todo check function vf_read return value
+	if(sz == 0)
+		return 1;
+		
+	VF_read(outBuffer,&bfLength,(reff->reff + TLV_valueOffset(snoop, sz)),st->file.hdl);
 	return 0;
 }
 
-uint8 TFB_setValue(TFB_TAG *reff, uch *outBuffer, int bufferLength)
+uint8 TFB_setValue(TFB_PARSER hdl, TFB_TAG *reff, uch *outBuffer, int bufferLength)
 {
+	uch snoop[8], *need;
+	int sz;
+	unsigned int t, l;
+	XRES *st = (XRES*)hdl.rsc;
+	
+	sz = sizeof(snoop);
+	VF_read(snoop,&sz,reff->reff,st->file.hdl);
+	if(sz == 0)
+		return 1;
+	
+	t = TLV_readTag(snoop, sz);
+	if(t != reff->tag)
+		return 1;
+	if(TLV_readLengthFix(snoop, sz) == bufferLength){
+		VF_write(outBuffer,bufferLength,reff->reff + TLV_valueOffset(snoop, sz), st->file.hdl);
+		return 0;
+	}
+	l = TLV_tlvByte(t, bufferLength);
+	need = (uch *)Z_MALLOX(l);
+	TLV_writeTlv(0,t,bufferLength, outBuffer, need);
+	VF_write(need, l, reff->reff, st->file.hdl);
+	Z_FREE(need);
 	return 0;
 }
 
-TFB_TAG *TFB_setInside(TFB_TAG *reff, int tag, int length, uch *value)
+TFB_TAG TFB_setInside(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *value)
 {
-	return 0;
+	TFB_TAG blank;
+	return blank;
 }
 
-TFB_TAG *TFB_setBefore(TFB_TAG *reff, int tag, int length, uch *value)
+TFB_TAG TFB_setBefore(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *value)
 {
-	return 0;
+	uch *need;
+	int l;
+	TFB_TAG cur;
+	XRES *st = (XRES*)hdl.rsc;
+	
+	
+	l = TLV_tlvByte(tag, length);
+	need = (uch *) Z_MALLOX(l);
+	TLV_writeTlv(0,tag,length,value,need);
+	VF_insert(need, l, reff->reff, st->file.hdl);	// todo find out insert requirement
+	Z_FREE(need);
+	
+	cur.tag = tag;
+	cur.length = length;
+	cur.reff = reff->reff;
+	return cur;
 }
 
-TFB_TAG *TFB_setAfter (TFB_TAG *reff, int tag, int length, uch *value)
+TFB_TAG TFB_setAfter (TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *value)
 {
-	return 0;
+	uch *need;
+	int l, j;
+	XRES *st = (XRES*)hdl.rsc;
+	TFB_TAG cur;
+	
+	l = TLV_tlvByte(tag, length);
+	j = TLV_tlvByte(reff->tag, reff->length);
+	need = (uch *) Z_MALLOX(l);
+	TLV_writeTlv(0,tag,length,value,need);
+	VF_insert(need, l, reff->reff + j,st->file.hdl);
+	Z_FREE(need);
+	
+	cur.reff += j;
+	cur.tag = tag;
+	cur.length = length;
+	return cur;
 }
 
 void TFB_close(TFB_PARSER usedHandle){
-	
+	XRES *st = (XRES*)usedHandle.rsc;
+	if(st == 0)
+		return;
+	VF_close(st->file.hdl);
+	CB_clear(&st->fifo);
+	Z_FREE(st);
+	usedHandle.rsc = 0;
 }

@@ -24,9 +24,10 @@
 // classlessTag is tag number without class and data object type
 // tagClass will change tag, but not affect byte needed for write down tag
 
-int TLV_writeLength(unsigned int length, char *lengthBuffer);
-int TLV_writeTag(unsigned char tagClass, unsigned int classlessTag, char *tagBuffer);
-int TLV_writeTlv(unsigned char tagClass, unsigned int classlessTag, unsigned int length, const char *value, char *tlvBuffer);
+int TLV_writeLength(unsigned int length, unsigned char *lengthBuffer);
+int TLV_writeTag(unsigned char tagClass, unsigned int classlessTag, unsigned char *tagBuffer);
+int TLV_writeTlv(unsigned char tagClass, unsigned int classlessTag, unsigned int length, 
+	const unsigned char *value, unsigned char *tlvBuffer);
 
 unsigned int TLV_readLength(const unsigned char *lengthBuffer, int bufLen);
 unsigned int TLV_readLengthFix(const unsigned char *tlvBuffer, int bufLen);

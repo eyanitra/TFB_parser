@@ -24,23 +24,23 @@ typedef struct tfbstack_t TFB_TAG;	//only valid for one use
 
 TFB_PARSER TFB_openFile(const char *fileName,VF_FOLDER folder);
 
-uint8 TFB_isCoherence(TFB_PARSER handle,const uch *checker);	// checker optional
+uint8 TFB_isCoherence(TFB_PARSER hdlParser,const uch *checker);	// checker optional
 
-void TFB_nextTag(TFB_PARSER handle, TFB_TAG *nextTag);
+void TFB_nextTag(TFB_PARSER hdlParser, TFB_TAG *nextTag);
 
-uint8 TFB_isEmpty(TFB_PARSER handle);
+uint8 TFB_isEmpty(TFB_PARSER hdlParser);
 
-uint8 TFB_clearTag(TFB_TAG *reff);
+uint8 TFB_clearTag(TFB_PARSER hdlParser, TFB_TAG *reff);
 
-uint8 TFB_getValue(TFB_TAG *reff, uch *outBuffer, int bufferLength);
+uint8 TFB_getValue(TFB_PARSER hdlParser, TFB_TAG *reff, uch *outBuffer, int bufferLength);
 
-uint8 TFB_setValue(TFB_TAG *reff, uch *outBuffer, int bufferLength);
+uint8 TFB_setValue(TFB_PARSER hdlParser, TFB_TAG *reff, uch *outBuffer, int bufferLength);
 
-TFB_TAG *TFB_setInside(TFB_TAG *reff, int tag, int length, uch *value);
+TFB_TAG TFB_setInside(TFB_PARSER hdlParser, TFB_TAG *reff, int tag, int length, uch *value);
 
-TFB_TAG *TFB_setBefore(TFB_TAG *reff, int tag, int length, uch *value);
+TFB_TAG TFB_setBefore(TFB_PARSER hdlParser, TFB_TAG *reff, int tag, int length, uch *value);
 
-TFB_TAG *TFB_setAfter (TFB_TAG *reff, int tag, int length, uch *value);
+TFB_TAG TFB_setAfter (TFB_PARSER hdlParser, TFB_TAG *reff, int tag, int length, uch *value);
 
 void TFB_close(TFB_PARSER usedHandle);
 

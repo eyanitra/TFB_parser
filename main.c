@@ -61,7 +61,7 @@ uint32 blackListGetVersion()
 	while(!TFB_isEmpty(prs)){
 		TFB_nextTag(prs, &el);
 		if(el.tag == BL_VERSION_TAG){
-			TFB_getValue(&el, bl, sizeof(bl));
+			TFB_getValue(prs, &el, bl, sizeof(bl));
 			found = 1;
 			break;
 		}
@@ -92,14 +92,14 @@ uint8 blackListSetVersion(uint32 version)
 		if(now.tag == TAG_PROLOG)
 			pr = now;
 		if(now.tag == BL_VERSION_TAG){
-			TFB_setValue(&now,verbuf,BNI_PPC_NUMBER_BYTE_LEN);
+			TFB_setValue(blf, &now,verbuf,BNI_PPC_NUMBER_BYTE_LEN);
 			wr = 1;
 			break;
 		}
 	}
 	
 	if(!wr)
-		if(TFB_setAfter(&pr,BL_VERSION_TAG, BNI_PPC_NUMBER_BYTE_LEN, verbuf))
+		TFB_setAfter(blf, &pr,BL_VERSION_TAG, BNI_PPC_NUMBER_BYTE_LEN, verbuf);
 	
 	TFB_close(blf);		
 	return !wr;		
@@ -117,7 +117,7 @@ uint8 blackListIsElementExist(uch cardAppNumber[BNI_PPC_CAN_LEN])
 	while(!TFB_isEmpty(prs)){
 		TFB_nextTag(prs, &el);
 		if(el.tag == VALID_NODE_TAG){
-			TFB_getValue(&el,record,sizeof(record));
+			TFB_getValue(prs, &el,record,sizeof(record));
 			if(isRecordedCan((char*)record,(char*)cardAppNumber)){
 				found = 1;
 				break;
@@ -138,19 +138,19 @@ uint8 blackListAddRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 		TFB_nextTag(p, &t);
 		if(t.tag == VALID_NODE_TAG){
 			iden = 1;
-			TFB_getValue(&t,r,sizeof(r));
+			TFB_getValue(p, &t,r,sizeof(r));
 			if(isRecordOverlap((char*)r, (char*)rec))
 				return 1;
 			continue;
 		}
 		if((t.tag != VALID_NODE_TAG)&&(iden == 1)){
-			TFB_setBefore(&t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
+			TFB_setBefore(p, &t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
 			return 1;
 		}
 	}
 	
 	if(t.tag == BL_VERSION_TAG){
-		TFB_setAfter(&t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
+		TFB_setAfter(p, &t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
 		return 1;
 	}
 	return 0;
@@ -163,9 +163,9 @@ uint8 blackListDeleteRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 	while(!TFB_isEmpty(p)){
 		TFB_nextTag(p, &t);
 		if(t.tag == VALID_NODE_TAG){
-			TFB_getValue(&t,r,sizeof(r));
+			TFB_getValue(p, &t,r,sizeof(r));
 			if(isRecordOverlap((char*)r,(char*)rec)){
-				return TFB_clearTag(&t);
+				return TFB_clearTag(p, &t);
 			}
 		}
 	}
@@ -199,21 +199,21 @@ void testing()
 }
 
 void pControlLine(){
-	char lv0[50], *d, lv1[25];
+	unsigned char lv0[50], *d, lv1[25];
 	int len;
 	
 	// tag without child, must have length == 0
 	d = lv1;
-	d += TLV_writeTlv(0,BL_VERSION_TAG,0," ",d);
-	d += TLV_writeTlv(0,PARAM_VERSION_TAG,0," ",d);
-	d += TLV_writeTlv(0,PARAM_DATA_TAG, 0," ",d);
-	d += TLV_writeTlv(0,VALID_NODE_TAG,0," ",d);
+	d += TLV_writeTlv(0,BL_VERSION_TAG,0,(unsigned char*)" ",d);
+	d += TLV_writeTlv(0,PARAM_VERSION_TAG,0,(unsigned char*)" ",d);
+	d += TLV_writeTlv(0,PARAM_DATA_TAG, 0,0,d);
+	d += TLV_writeTlv(0,VALID_NODE_TAG,0,0,d);
 	len =  d - lv1;
 	d = lv0;
 	d += TLV_writeTlv(0,TAG_CHECKER,len,lv1,lv0);
 	len = d - lv0;
-	print8L(lv0,len);
-	printCode(lv0, len);
+	print8L((char*)lv0,len);
+	printCode((char*)lv0, len);
 }
 
 int main(int argc, char **argv)

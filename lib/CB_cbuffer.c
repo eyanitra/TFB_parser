@@ -132,3 +132,13 @@ void CB_clear(CB_HDL *hd)
 	Z_FREE(hdl);
 	hd->rsc = 0;
 }
+
+void CB_peek(CB_HDL *hd,  int eNuma, void *element)
+{
+	handle *hdl = (handle*)hd->rsc;
+	eNuma *= hdl->lSize;
+	eNuma += hdl->first;
+	while(eNuma >= hdl->bSize)
+		eNuma -= hdl->bSize;
+	Z_CPY(element,(hdl->buffer +eNuma), hdl->lSize);
+}
