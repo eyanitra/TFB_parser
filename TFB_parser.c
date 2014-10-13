@@ -347,7 +347,7 @@ TFB_TAG TFB_setBefore(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *v
 	l = TLV_tlvByte(tag, length);
 	need = (uch *) Z_MALLOX(l);
 	TLV_writeTlv(0,tag,length,value,need);
-	VF_insert(need, l, reff->reff, st->file.hdl);	// todo find out insert requirement
+	VF_insert(need, l, reff->reff, 0, st->file.hdl);	// todo find out insert requirement
 	Z_FREE(need);
 	
 	cur.tag = tag;
@@ -367,7 +367,7 @@ TFB_TAG TFB_setAfter (TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *v
 	j = TLV_tlvByte(reff->tag, reff->length);
 	need = (uch *) Z_MALLOX(l);
 	TLV_writeTlv(0,tag,length,value,need);
-	VF_insert(need, l, reff->reff + j,st->file.hdl);
+	VF_insert(need, l, reff->reff + j,0,st->file.hdl);
 	Z_FREE(need);
 	
 	cur.reff += j;

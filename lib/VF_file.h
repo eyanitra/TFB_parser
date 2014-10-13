@@ -14,7 +14,7 @@ int VF_open(VF_FOLDER folder,const char *fileName, VF_FILE *fileHandle, VF_OFFSE
 
 int VF_write(const uch *byteIn, int inputByteSize, VF_OFFSET offset,VF_FILE file);
 
-int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset,VF_FILE file);
+int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initialSegLen, VF_FILE file);
 
 int VF_read(uch *byteIn, int *ioByteSize, VF_OFFSET offset, VF_FILE file);
 
