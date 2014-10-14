@@ -68,21 +68,35 @@ int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initia
 			return 1;
 	}
 
-	if(fsize(c->hdl) < offset)
+	if(fsize(c->hdl) < offset){
+		
 		return 1;
+	}
 		// todo insert 
 	return 1;
 }
 
 int VF_read(uch *byteIn, int *ioByteSize, VF_OFFSET offset, VF_FILE file)
 {
-	FILE *hdl = (FILE*)file.rsc;
-	if(hdl){
-		if(fsize(hdl) < offset)
+	int readSize;
+	R_VF *c = (R_VF*)file.rsc;
+	
+	if(!c)
+		return 1;
+		
+	if(!c->hdl){
+		c->hdl = fopen(c->fileName,"r+");
+		if(!c->hdl)
 			return 1;
-		// todo insert 
 	}
-	return 1;
+
+	if(fsize(c->hdl) < offset)
+		return 1;
+	readSize = *ioByteSize;
+	readSize = fread(byteIn, sizeof(uch), readSize,c->hdl);
+	*ioByteSize = readSize;
+	return 0;
+
 }
 
 int VF_close(VF_FILE file)
