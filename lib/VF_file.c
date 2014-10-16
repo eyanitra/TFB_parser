@@ -10,20 +10,6 @@ struct rsc_vf{
 
 typedef struct rsc_vf R_VF;
 
-int VF_open(VF_FOLDER folder, const char *fileName, VF_FILE *fileHandle, VF_OFFSET *size)
-{
-	R_VF *c = (R_VF*)malloc(sizeof(R_VF));
-	c->hdl = fopen(fileName, "+r");
-	if(c->hdl){
-		strcpy((char*)c->fileName,fileName);
-		fileHandle->rsc = c;
-		return 0;
-	}
-	
-	free(c);
-	return 1;
-}
-
 long int fsize(FILE* hdl){
 	long int size, now;
 	
@@ -33,6 +19,24 @@ long int fsize(FILE* hdl){
 	
 	fseek(hdl, now, SEEK_SET);
 	return size;
+}
+
+/////////////////////////////
+
+int VF_open(VF_FOLDER folder, const char *fileName, VF_FILE *fileHandle, VF_OFFSET *size)
+{
+	R_VF *c = (R_VF*)malloc(sizeof(R_VF));
+	c->hdl = fopen(fileName, "+a");
+	if(c->hdl){
+		strcpy((char*)c->fileName,fileName);
+		fileHandle->rsc = c;
+		if(size)
+			*size = fsize(c->hdl);
+		return 0;
+	}
+	
+	free(c);
+	return 1;
 }
 
 int VF_write(const uch *byteIn, int inputByteSize, VF_OFFSET offset,VF_FILE file)
@@ -55,9 +59,28 @@ int VF_write(const uch *byteIn, int inputByteSize, VF_OFFSET offset,VF_FILE file
 	return 0;
 }
 
+void VF_copySegmentFile(int srcOffset, int length, FILE *trg, FILE *src)
+{
+	unsigned char buf[64];
+	int c, l;
+	
+	fseek(src,(long int)srcOffset, SEEK_SET);
+	for(c= 0; c < length; c+= l){
+		l = sizeof(buf);
+		if(l > length)
+			l = length;
+		fread(buf, sizeof(unsigned char), l,src);
+		fwrite(buf, sizeof(unsigned char), l, trg);
+	}
+}
+
+#define VF_TEMP_NAME "xxxtemp"
+
 int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initialLength, VF_FILE file)
 {
 	R_VF *c = (R_VF*)file.rsc;
+	FILE *temp;
+	VF_OFFSET size;
 	
 	if(!c)
 		return 1;
@@ -68,11 +91,20 @@ int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initia
 			return 1;
 	}
 
-	if(fsize(c->hdl) < offset){
-		
+	size = fsize(c->hdl);
+	if(size < offset)
 		return 1;
-	}
-		// todo insert 
+	temp = fopen(VF_TEMP_NAME,"w+");
+	VF_copySegmentFile(0,offset,temp, c->hdl);
+	fwrite(byteIn, sizeof(uch), inputByteSize, temp);
+	if(size > (offset + initialLength))
+		VF_copySegmentFile(offset + initialLength,size - (offset+initialLength),temp, c->hdl);
+	
+	fclose(c->hdl);
+	fclose(temp);
+	remove(c->fileName);
+	rename(VF_TEMP_NAME,c->fileName);
+	
 	return 1;
 }
 

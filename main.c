@@ -216,8 +216,12 @@ void pControlLine(){
 	printCode((char*)lv0, len);
 }
 
+//@testFile.c
+extern void test_1();
+
 int main(int argc, char **argv)
 {
+	test_1();
 	pControlLine();
 	//testing();
 	return 0;
