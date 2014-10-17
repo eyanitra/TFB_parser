@@ -10,15 +10,17 @@ struct rsc_vf{
 
 typedef struct rsc_vf R_VF;
 
-long int fsize(FILE* hdl){
-	long int size, now;
+VF_OFFSET fsize(FILE* hdl){
+	long size;
+	fpos_t p;
 	
-	now = ftell(hdl);
+	fgetpos(hdl, &p);
+	
 	fseek(hdl,0, SEEK_END);
 	size = ftell(hdl);
 	
-	fseek(hdl, now, SEEK_SET);
-	return size;
+	fsetpos(hdl, &p);
+	return (VF_OFFSET)size;
 }
 
 /////////////////////////////
@@ -26,7 +28,7 @@ long int fsize(FILE* hdl){
 int VF_open(VF_FOLDER folder, const char *fileName, VF_FILE *fileHandle, VF_OFFSET *size)
 {
 	R_VF *c = (R_VF*)malloc(sizeof(R_VF));
-	c->hdl = fopen(fileName, "+a");
+	c->hdl = fopen(fileName, "a+b");
 	if(c->hdl){
 		strcpy((char*)c->fileName,fileName);
 		fileHandle->rsc = c;
@@ -47,7 +49,7 @@ int VF_write(const uch *byteIn, int inputByteSize, VF_OFFSET offset,VF_FILE file
 		return 1;
 		
 	if(!c->hdl){
-		c->hdl = fopen(c->fileName,"r+");
+		c->hdl = fopen(c->fileName,"r+b");
 		if(!c->hdl)
 			return 1;
 	}
