@@ -32,6 +32,7 @@ int VF_open(VF_FOLDER folder, const char *fileName, VF_FILE *fileHandle, VF_OFFS
 	if(c->hdl){
 		strcpy((char*)c->fileName,fileName);
 		fileHandle->rsc = c;
+		fseek(c->hdl,0, SEEK_SET);
 		if(size)
 			*size = fsize(c->hdl);
 		return 0;
@@ -88,7 +89,7 @@ int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initia
 		return 1;
 		
 	if(!c->hdl){
-		c->hdl = fopen(c->fileName,"r+");
+		c->hdl = fopen(c->fileName,"r+b");
 		if(!c->hdl)
 			return 1;
 	}
@@ -96,7 +97,9 @@ int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initia
 	size = fsize(c->hdl);
 	if(size < offset)
 		return 1;
-	temp = fopen(VF_TEMP_NAME,"w+");
+	temp = fopen(VF_TEMP_NAME,"w+b");
+	if(!temp)
+		return 1;
 	VF_copySegmentFile(0,offset,temp, c->hdl);
 	fwrite(byteIn, sizeof(uch), inputByteSize, temp);
 	if(size > (offset + initialLength))
@@ -106,8 +109,9 @@ int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initia
 	fclose(temp);
 	remove(c->fileName);
 	rename(VF_TEMP_NAME,c->fileName);
+	c->hdl = 0;
 	
-	return 1;
+	return 0;
 }
 
 int VF_read(uch *byteIn, int *ioByteSize, VF_OFFSET offset, VF_FILE file)
@@ -130,7 +134,6 @@ int VF_read(uch *byteIn, int *ioByteSize, VF_OFFSET offset, VF_FILE file)
 	readSize = fread(byteIn, sizeof(uch), readSize,c->hdl);
 	*ioByteSize = readSize;
 	return 0;
-
 }
 
 int VF_close(VF_FILE file)
