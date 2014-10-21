@@ -330,13 +330,13 @@ uint8 TFB_setValue(TFB_PARSER hdl, TFB_TAG *reff, uch *outBuffer, int bufferLeng
 	return 0;
 }
 
-TFB_TAG TFB_setInside(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *value)
+TFB_TAG TFB_setInside(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const uch *value)
 {
 	TFB_TAG blank;
 	return blank;
 }
 
-TFB_TAG TFB_setBefore(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *value)
+TFB_TAG TFB_setBefore(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const uch *value)
 {
 	uch *need;
 	int l;
@@ -356,7 +356,7 @@ TFB_TAG TFB_setBefore(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *v
 	return cur;
 }
 
-TFB_TAG TFB_setAfter (TFB_PARSER hdl, TFB_TAG *reff, int tag, int length, uch *value)
+TFB_TAG TFB_setAfter (TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const uch *value)
 {
 	uch *need;
 	int l, j;

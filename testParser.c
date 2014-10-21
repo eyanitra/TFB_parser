@@ -9,24 +9,39 @@
 
 #define PARSER_TFILE	"ulalalo"
 
+static void printTagStat(TFB_TAG *dc)
+{
+	printf("tag :%d\n",dc->tag);
+	printf("len :%d\n",dc->length);
+	printf("ref :%d\n",dc->reff);
+}
+
 void testPars_1()
 {
 	VF_FOLDER dummy;
 	TFB_PARSER hdl;
-	int ret;
+	int ret, i;
 	TFB_TAG tag;
-	//empty file behavior
-	
+	// todo writing after tag
 	hdl = TFB_openFile(PARSER_TFILE, dummy);
 	ret = TFB_isCoherence(hdl, 0);
 	printf("tfb coherence:%s\n",ret?"yes":"no");
-	ret = TFB_isEmpty(hdl);
-	printf("tfb empty:%s\n",ret?"yes":"no");
-	TFB_nextTag(hdl,&tag);
+	while(i++ < 3){
+		ret = TFB_isEmpty(hdl);
+		printf("tfb empty:%s\n",ret?"yes":"no");
+		if(ret)
+			break;
+		TFB_nextTag(hdl,&tag);
+		printf("next tag \n");
+		printTagStat(&tag);
+		if(tag.tag != 0){
+			tag = TFB_setAfter(hdl,&tag,100,3,(uch*)"mmm");
+			printf("after tag \n");
+			printTagStat(&tag);
+		}
+	}
+	TFB_close(hdl);
 }
-
-// todo writing
-
 // todo search
 
 // todo delete
