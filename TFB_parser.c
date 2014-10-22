@@ -89,27 +89,27 @@ static uint8 TFB_checkerOk(XRES *st, const uch *checker){
 		chkB = (uch*)checker;
 		st->ancor.dSeg = 0;
 	}
-
-	tag = TLV_readTag(chkB,sz);
-	if(tag != TAG_CHECKER)
-		return 0;
-	chkB += TLV_tagByte(chkB,sz);
-	len = TLV_readLengthFix(chkB, sz);
-	if(!len)
-		return 0;
-	
-	if(!checker){
-		tot = TLV_tlvByte(tag, len);
-		chkB = (uch*) Z_MALLOX(tot);
-		sz = tot;
-		VF_read(chkB,&sz,0,st->file.hdl);
-		if(sz != tot)
+	if(sz){
+		tag = TLV_readTag(chkB,sz);
+		if(tag != TAG_CHECKER)
+			return 0;
+		chkB += TLV_tagByte(chkB,sz);
+		len = TLV_readLengthFix(chkB, sz);
+		if(!len)
 			return 0;
 		
-		st->ancor.dSeg = TLV_nextTlvOffset(chkB,tot);
+		if(!checker){
+			tot = TLV_tlvByte(tag, len);
+			chkB = (uch*) Z_MALLOX(tot);
+			sz = tot;
+			VF_read(chkB,&sz,0,st->file.hdl);
+			if(sz != tot)
+				return 0;
+			
+			st->ancor.dSeg = TLV_nextTlvOffset(chkB,tot);
+		}
+		st->ancor.check = chkB;
 	}
-	
-	st->ancor.check = chkB;
 	return 1;
 }
 

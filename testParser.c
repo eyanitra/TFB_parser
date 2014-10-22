@@ -20,7 +20,7 @@ void testPars_1()
 {
 	VF_FOLDER dummy;
 	TFB_PARSER hdl;
-	int ret, i;
+	int ret, i=0;
 	TFB_TAG tag;
 	// todo writing after tag
 	hdl = TFB_openFile(PARSER_TFILE, dummy);
@@ -38,13 +38,24 @@ void testPars_1()
 			tag = TFB_setAfter(hdl,&tag,100,3,(uch*)"mmm");
 			printf("after tag \n");
 			printTagStat(&tag);
-		}
+			
+			tag = TFB_setBefore(hdl,&tag,101,3,(uch*)"xxx");
+			printf("after tag \n");
+			printTagStat(&tag);
+			
+			tag = TFB_setAfter(hdl,&tag,102,3,(uch*)"yyy");
+			printf("after tag \n");
+			printTagStat(&tag);
+			
+			tag = TFB_setBefore(hdl,&tag,103,3,(uch*)"zzz");
+			printf("after tag \n");
+			printTagStat(&tag);
+		}else
+			break;
 	}
 	TFB_close(hdl);
 }
-// todo search
 
-// todo delete
 
 void testBl_1()
 {

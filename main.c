@@ -16,6 +16,8 @@ extern void test_3();
 extern void test_4();
 extern void test_5();
 
+extern void testPars_1();
+
 void testing()
 {	
 	// todo complete testing here
@@ -42,15 +44,20 @@ void pControlLine(){
 	printCode((char*)lv0, len);
 }
 
-int main(int argc, char **argv)
+void testFile()
 {
-	// test file
 	test_1();
 	test_2();
 	test_3();
 	test_4();
 	test_3();
 	test_5();
+}
+
+int main(int argc, char **argv)
+{
+	
+	testPars_1();
 	// build control string
 	pControlLine();
 	// test blacklist
