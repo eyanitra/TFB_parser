@@ -21,6 +21,7 @@
 
 struct tfb_verify{
 	uch *check;				// must copy from file/get from outside
+	uch fProlog;
 	VF_OFFSET dSeg;			// offset of data segment
 	//do not implement yet
 	unsigned int sibling; 	// last tag with same parent
@@ -218,10 +219,13 @@ static uint8 TFB_fillBuffOk(XRES *st)
 	unsigned int tag;
 	
 	if((st->file.cur == 0)&& CB_isEmpty(&st->fifo)){
-		tld.tag = TAG_CHECKER;
-		tld.length = 0;
-		tld.off = st->ancor.dSeg;
-		CB_addElement(&st->fifo,&tld);
+		if(st->ancor.fProlog == 0){
+			tld.tag = TAG_PROLOG;
+			tld.length = 0;
+			tld.off = st->ancor.dSeg;
+			CB_addElement(&st->fifo,&tld);
+		}
+		st->ancor.fProlog = 1;	// only first encounter
 	}
 	
 	while(!CB_isFull(&st->fifo)){
