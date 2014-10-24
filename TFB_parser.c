@@ -238,7 +238,6 @@ static uint8 TFB_fillBuffOk(XRES *st)
 			st->file.cur += TLV_nextTlvOffset(snoop, sz);
 			continue;
 		}
-		
 		tagInfo = TFB_findTag(st, tag);
 		if(tagInfo > 0){
 			tld.tag = tag;
@@ -374,7 +373,7 @@ TFB_TAG TFB_setAfter (TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const u
 	VF_insert(need, l, reff->reff + j,0,st->file.hdl);
 	Z_FREE(need);
 	
-	cur.reff += j;
+	cur.reff = reff->reff + j;
 	cur.tag = tag;
 	cur.length = length;
 	return cur;
