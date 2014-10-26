@@ -5,7 +5,7 @@
 ## Debug
 ProjectName            :=Parser
 ConfigurationName      :=Debug
-WorkspacePath          := "D:\Codelite.workspace\Workhome"
+WorkspacePath          := "D:\Codelite.workspace\Work"
 ProjectPath            := "D:\Codelite.workspace\Workhome\TFB_parser"
 IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=Unknown
-Date                   :=10/03/14
+Date                   :=10/26/14
 CodeLitePath           :="C:\Program Files\CodeLite"
 LinkerName             :=C:/MinGW-4.8.1/bin/g++.exe 
 SharedObjectLinkerName :=C:/MinGW-4.8.1/bin/g++.exe -shared -fPIC
@@ -63,8 +63,8 @@ AS       := C:/MinGW-4.8.1/bin/as.exe
 ##
 CodeLiteDir:=C:\Program Files\CodeLite
 UNIT_TEST_PP_SRC_DIR:=C:\UnitTest++-1.3
-Objects0=$(IntermediateDirectory)/main.c$(ObjectSuffix) $(IntermediateDirectory)/TFB_parser.c$(ObjectSuffix) $(IntermediateDirectory)/printer.c$(ObjectSuffix) $(IntermediateDirectory)/BPPblackListRecord.c$(ObjectSuffix) $(IntermediateDirectory)/lib_DSC_bignum.c$(ObjectSuffix) $(IntermediateDirectory)/lib_DSC_hash.c$(ObjectSuffix) $(IntermediateDirectory)/lib_VF_file.c$(ObjectSuffix) $(IntermediateDirectory)/lib_VF_folder.c$(ObjectSuffix) $(IntermediateDirectory)/lib_DSC_converter.c$(ObjectSuffix) $(IntermediateDirectory)/lib_TLV_serializer.c$(ObjectSuffix) \
-	
+Objects0=$(IntermediateDirectory)/main.c$(ObjectSuffix) $(IntermediateDirectory)/TFB_parser.c$(ObjectSuffix) $(IntermediateDirectory)/printer.c$(ObjectSuffix) $(IntermediateDirectory)/BPPblackListRecord.c$(ObjectSuffix) $(IntermediateDirectory)/testFile.c$(ObjectSuffix) $(IntermediateDirectory)/BPP_blacklistControl.c$(ObjectSuffix) $(IntermediateDirectory)/testParser.c$(ObjectSuffix) $(IntermediateDirectory)/lib_DSC_bignum.c$(ObjectSuffix) $(IntermediateDirectory)/lib_DSC_hash.c$(ObjectSuffix) $(IntermediateDirectory)/lib_VF_file.c$(ObjectSuffix) \
+	$(IntermediateDirectory)/lib_VF_folder.c$(ObjectSuffix) $(IntermediateDirectory)/lib_DSC_converter.c$(ObjectSuffix) $(IntermediateDirectory)/lib_TLV_serializer.c$(ObjectSuffix) $(IntermediateDirectory)/lib_CB_cbuffer.c$(ObjectSuffix) 
 
 
 
@@ -123,6 +123,30 @@ $(IntermediateDirectory)/BPPblackListRecord.c$(DependSuffix): BPPblackListRecord
 $(IntermediateDirectory)/BPPblackListRecord.c$(PreprocessSuffix): BPPblackListRecord.c
 	@$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/BPPblackListRecord.c$(PreprocessSuffix) "BPPblackListRecord.c"
 
+$(IntermediateDirectory)/testFile.c$(ObjectSuffix): testFile.c $(IntermediateDirectory)/testFile.c$(DependSuffix)
+	$(CC) $(SourceSwitch) "D:/Codelite.workspace/Workhome/TFB_parser/testFile.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/testFile.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/testFile.c$(DependSuffix): testFile.c
+	@$(CC) $(CFLAGS) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/testFile.c$(ObjectSuffix) -MF$(IntermediateDirectory)/testFile.c$(DependSuffix) -MM "testFile.c"
+
+$(IntermediateDirectory)/testFile.c$(PreprocessSuffix): testFile.c
+	@$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/testFile.c$(PreprocessSuffix) "testFile.c"
+
+$(IntermediateDirectory)/BPP_blacklistControl.c$(ObjectSuffix): BPP_blacklistControl.c $(IntermediateDirectory)/BPP_blacklistControl.c$(DependSuffix)
+	$(CC) $(SourceSwitch) "D:/Codelite.workspace/Workhome/TFB_parser/BPP_blacklistControl.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/BPP_blacklistControl.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/BPP_blacklistControl.c$(DependSuffix): BPP_blacklistControl.c
+	@$(CC) $(CFLAGS) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/BPP_blacklistControl.c$(ObjectSuffix) -MF$(IntermediateDirectory)/BPP_blacklistControl.c$(DependSuffix) -MM "BPP_blacklistControl.c"
+
+$(IntermediateDirectory)/BPP_blacklistControl.c$(PreprocessSuffix): BPP_blacklistControl.c
+	@$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/BPP_blacklistControl.c$(PreprocessSuffix) "BPP_blacklistControl.c"
+
+$(IntermediateDirectory)/testParser.c$(ObjectSuffix): testParser.c $(IntermediateDirectory)/testParser.c$(DependSuffix)
+	$(CC) $(SourceSwitch) "D:/Codelite.workspace/Workhome/TFB_parser/testParser.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/testParser.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/testParser.c$(DependSuffix): testParser.c
+	@$(CC) $(CFLAGS) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/testParser.c$(ObjectSuffix) -MF$(IntermediateDirectory)/testParser.c$(DependSuffix) -MM "testParser.c"
+
+$(IntermediateDirectory)/testParser.c$(PreprocessSuffix): testParser.c
+	@$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/testParser.c$(PreprocessSuffix) "testParser.c"
+
 $(IntermediateDirectory)/lib_DSC_bignum.c$(ObjectSuffix): lib/DSC_bignum.c $(IntermediateDirectory)/lib_DSC_bignum.c$(DependSuffix)
 	$(CC) $(SourceSwitch) "D:/Codelite.workspace/Workhome/TFB_parser/lib/DSC_bignum.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_DSC_bignum.c$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/lib_DSC_bignum.c$(DependSuffix): lib/DSC_bignum.c
@@ -171,6 +195,14 @@ $(IntermediateDirectory)/lib_TLV_serializer.c$(DependSuffix): lib/TLV_serializer
 $(IntermediateDirectory)/lib_TLV_serializer.c$(PreprocessSuffix): lib/TLV_serializer.c
 	@$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_TLV_serializer.c$(PreprocessSuffix) "lib/TLV_serializer.c"
 
+$(IntermediateDirectory)/lib_CB_cbuffer.c$(ObjectSuffix): lib/CB_cbuffer.c $(IntermediateDirectory)/lib_CB_cbuffer.c$(DependSuffix)
+	$(CC) $(SourceSwitch) "D:/Codelite.workspace/Workhome/TFB_parser/lib/CB_cbuffer.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/lib_CB_cbuffer.c$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/lib_CB_cbuffer.c$(DependSuffix): lib/CB_cbuffer.c
+	@$(CC) $(CFLAGS) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/lib_CB_cbuffer.c$(ObjectSuffix) -MF$(IntermediateDirectory)/lib_CB_cbuffer.c$(DependSuffix) -MM "lib/CB_cbuffer.c"
+
+$(IntermediateDirectory)/lib_CB_cbuffer.c$(PreprocessSuffix): lib/CB_cbuffer.c
+	@$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/lib_CB_cbuffer.c$(PreprocessSuffix) "lib/CB_cbuffer.c"
+
 
 -include $(IntermediateDirectory)/*$(DependSuffix)
 ##
@@ -181,6 +213,6 @@ clean:
 	$(RM) ./Debug/*$(DependSuffix)
 	$(RM) $(OutputFile)
 	$(RM) $(OutputFile).exe
-	$(RM) "../.build-debug/Parser"
+	$(RM) "../../Work/.build-debug/Parser"
 
 

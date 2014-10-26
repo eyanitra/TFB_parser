@@ -131,6 +131,7 @@ int VF_read(uch *byteIn, int *ioByteSize, VF_OFFSET offset, VF_FILE file)
 	if(fsize(c->hdl) < offset)
 		return 1;
 	readSize = *ioByteSize;
+	fseek(c->hdl, offset, SEEK_SET);
 	readSize = fread(byteIn, sizeof(uch), readSize,c->hdl);
 	*ioByteSize = readSize;
 	return 0;

@@ -122,21 +122,21 @@ uint8 blackListIsElementExist(uch cardAppNumber[BNI_PPC_CAN_LEN])
 
 uint8 blackListAddRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 {
-	TFB_TAG t;
+	TFB_TAG t, f;
 	uch r[BLS_RECORD_LENGTH];
-	uint8 iden = 0;
 	
+	f.tag = 0; // f initially not a valid tag
 	while(!TFB_isEmpty(p)){
 		TFB_nextTag(p, &t);
 		if(t.tag == VALID_NODE_TAG){
-			iden = 1;
 			TFB_getValue(p, &t,r,sizeof(r));
 			if(isRecordOverlap((char*)r, (char*)rec))
 				return 1;
+			f = t;
 			continue;
 		}
-		if((t.tag != VALID_NODE_TAG)&&(iden == 1)){
-			TFB_setBefore(p, &t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
+		if((t.tag != VALID_NODE_TAG)&&(f.tag == VALID_NODE_TAG)){
+			TFB_setAfter(p, &f,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
 			return 1;
 		}
 	}

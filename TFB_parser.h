@@ -38,8 +38,6 @@ uint8 TFB_setValue(TFB_PARSER hdlParser, TFB_TAG *reff, uch *outBuffer, int buff
 
 TFB_TAG TFB_setInside(TFB_PARSER hdlParser, TFB_TAG *reff, int tag, int length,const uch *value);
 
-TFB_TAG TFB_setBefore(TFB_PARSER hdlParser, TFB_TAG *reff, int tag, int length,const uch *value);
-
 TFB_TAG TFB_setAfter (TFB_PARSER hdlParser, TFB_TAG *reff, int tag, int length,const uch *value);
 
 void TFB_close(TFB_PARSER usedHandle);

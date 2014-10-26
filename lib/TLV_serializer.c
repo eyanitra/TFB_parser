@@ -5,7 +5,7 @@
 #define LENGTH_BYTE_BER_2	0x100
 #define LENGTH_BYTE_BER_3	0x10000
 #define LENGTH_BYTE_BER_4	0x1000000
-#define LAST_LENGTH			0x80
+#define FIRST_LENGTH		0x80
 
 
 int TLV_writeLength(unsigned int length, unsigned char *lengthBuffer)
@@ -15,23 +15,23 @@ int TLV_writeLength(unsigned int length, unsigned char *lengthBuffer)
 		return 1;
 	}
 	if(length < LENGTH_BYTE_BER_2){
-		lengthBuffer[0] = LAST_LENGTH + 1;
+		lengthBuffer[0] = FIRST_LENGTH + 1;
 		lengthBuffer[1] = length;
 		return 2;
 	}
 	if(length < LENGTH_BYTE_BER_3){
-		lengthBuffer[0] = LAST_LENGTH + 2;
+		lengthBuffer[0] = FIRST_LENGTH + 2;
 		lengthBuffer[1] = length;
 		lengthBuffer[2] = (length >> 8)& 0xFF;
 		return 3;
 	}
 	if(length < LENGTH_BYTE_BER_4){
-		lengthBuffer[0] = LAST_LENGTH + 3;
+		lengthBuffer[0] = FIRST_LENGTH + 3;
 		lengthBuffer[1] = length;
 		lengthBuffer[2] = (length >> 8)& 0xFF;
 		return 4;
 	}
-	lengthBuffer[0] = LAST_LENGTH + 4;
+	lengthBuffer[0] = FIRST_LENGTH + 4;
 	lengthBuffer[1] = (length >> 8)& 0xFF;
 	lengthBuffer[2] = (length >> 16)& 0xFF;
 	lengthBuffer[3] = (length >> 24)& 0xFF;
@@ -43,7 +43,7 @@ int TLV_writeLength(unsigned int length, unsigned char *lengthBuffer)
 #define TAG_BYTE_BER_3      1024
 #define TAG_BYTE_BER_4		2097152L
 #define TAG_BYTE_BER_5		268435456L
-#define TAG_CONTINUE		0x80
+#define TAG_STOP			0x80
 #define SHORT_FORM			0x10
 #define CLASS_MASK			0xE0
 #define FIRST_MASK			(SHORT_FORM | 0x0F)
@@ -58,20 +58,20 @@ int TLV_writeTag(unsigned char tagClass, unsigned int tag, unsigned char *tagBuf
 	}
 	if(tag < TAG_BYTE_BER_2){
 		tagBuffer[0] = FIRST_MASK + tagClass;
-		tagBuffer[1] = tag + 0x80;
+		tagBuffer[1] = tag + TAG_STOP;
 		return 2;
 	}
 	if(tag < TAG_BYTE_BER_3){
 		tagBuffer[0] = FIRST_MASK + tagClass;
 		tagBuffer[1] = (tag >> 7) & 0x7F;
-		tagBuffer[2] = (tag & 0x7F) + 0x80; 
+		tagBuffer[2] = (tag & 0x7F) + TAG_STOP; 
 		return 3;
 	}
 	if(tag < TAG_BYTE_BER_4){
 		tagBuffer[0] = FIRST_MASK + tagClass;
 		tagBuffer[1] = (tag >> 14) & 0x7F;
 		tagBuffer[2] = (tag >> 7)  & 0x7F;
-		tagBuffer[3] = (tag & 0x7F) + 0x80;
+		tagBuffer[3] = (tag & 0x7F) + TAG_STOP;
 		return 4;
 	}
 	
@@ -79,7 +79,7 @@ int TLV_writeTag(unsigned char tagClass, unsigned int tag, unsigned char *tagBuf
 	tagBuffer[1] = (tag >> 21) & 0x7F;
 	tagBuffer[2] = (tag >> 14) & 0x7F;
 	tagBuffer[3] = (tag >> 7)  & 0x7F;
-	tagBuffer[4] = (tag & 0x7F) + 0x80;
+	tagBuffer[4] = (tag & 0x7F) + TAG_STOP;
 	return 5;
 }
 
@@ -168,12 +168,14 @@ unsigned int TLV_readTag(const unsigned char *tagBuffer, int bufLen)
 	do{
 		j <<= 7;
 		j += (tagBuffer[i] & 0x7F);
-	}while(tagBuffer[i++] & TAG_CONTINUE);
+	}while((tagBuffer[i++] & TAG_STOP) == 0);
 	return j;
 }
 
 int TLV_lengthByte(const unsigned char *lengthBuffer, int bufLen)
 {
+	if((lengthBuffer[0] & FIRST_LENGTH) == 0)
+		return 1;
 	return (int)(lengthBuffer[0]& 0x7F);
 }
 
@@ -182,7 +184,7 @@ int TLV_tagByte(const unsigned char *tagBuffer, int bufLen)
 	int i = 1;
 	if((tagBuffer[0] &  SHORT_FORM) == 0)
 		return i;
-	while(tagBuffer[i++] & TAG_CONTINUE){
+	while((tagBuffer[i++] & TAG_STOP) == 0){
 		if(i >= bufLen)
 			return 0;
 	}

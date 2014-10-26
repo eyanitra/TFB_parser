@@ -33,7 +33,7 @@ typedef struct tfb_verify ANCESTRY;
 struct tfb_info{
 	int tag;
 	int length;
-	VF_OFFSET off;
+	VF_OFFSET offset;
 };
 typedef struct tfb_info L_FIFO;
 
@@ -120,26 +120,28 @@ static int TFB_findTag(XRES *st, unsigned int tag)
 	int sk, limit, fTag; // cdata, fLen, fVal;
 
 	lookup = st->ancor.check;
-	sk = TLV_valueOffset(lookup, 5);
-	limit = TLV_readLengthFix(lookup, 5);
-	while(limit > sk){
-		fTag = TLV_readTag(&lookup[sk],limit -sk);
-		if(fTag == tag){
-			found = 1;
-			break;
-		}
-		/* 
-		// disable reading CDATA
-		fLen = TLV_readLengthFix(&lookup[sk], limit - sk);
-		if(fLen > 0){
-			fVal = TLV_valueOffset(&lookup[sk], limit - sk);
-			cdata = lookup[fVal];
-			if(fLen > (cdata + 1)){
-				sk += (cdata + fVal + 1);
-				continue;
+	if(lookup){
+		sk = TLV_valueOffset(lookup, 5);
+		limit = TLV_readLengthFix(lookup, 5);
+		while(limit > sk){
+			fTag = TLV_readTag(&lookup[sk],limit -sk);
+			if(fTag == tag){
+				found = 1;
+				break;
 			}
-		}*/
-		sk += TLV_nextTlvOffset(&lookup[sk], limit -sk);
+			/* 
+			// disable reading CDATA
+			fLen = TLV_readLengthFix(&lookup[sk], limit - sk);
+			if(fLen > 0){
+				fVal = TLV_valueOffset(&lookup[sk], limit - sk);
+				cdata = lookup[fVal];
+				if(fLen > (cdata + 1)){
+					sk += (cdata + fVal + 1);
+					continue;
+				}
+			}*/
+			sk += TLV_nextTlvOffset(&lookup[sk], limit -sk);
+		}
 	}
 	if(found)
 		return sk;
@@ -214,45 +216,46 @@ uint8 TFB_isCoherence(TFB_PARSER handle, const uch *checker)
 static uint8 TFB_fillBuffOk(XRES *st)
 {
 	uch snoop[8];
-	int sz, tagInfo;
+	int sz, tagInfo, ret;
 	L_FIFO tld;
-	unsigned int tag;
-	
+	unsigned int tag;	
+	// if first encounter add PROLOG
 	if((st->file.cur == 0)&& CB_isEmpty(&st->fifo)){
 		if(st->ancor.fProlog == 0){
 			tld.tag = TAG_PROLOG;
 			tld.length = 0;
-			tld.off = st->ancor.dSeg;
+			tld.offset = st->ancor.dSeg;
 			CB_addElement(&st->fifo,&tld);
 		}
-		st->ancor.fProlog = 1;	// only first encounter
+		st->ancor.fProlog = 1;	
 	}
 	
 	while(!CB_isFull(&st->fifo)){
 		sz = sizeof(snoop);
-		VF_read(snoop,&sz,st->file.cur,st->file.hdl);
-		if(sz == 0)
-			break;
+		ret = VF_read(snoop,&sz,st->file.cur,st->file.hdl);
+		if((sz == 0)||(ret))
+			break;	// todo: add end of file tag?
 		tag = TLV_readTag(snoop, sz);
-		if(tag == TAG_CHECKER){
-			st->file.cur += TLV_nextTlvOffset(snoop, sz);
-			continue;
-		}
-		tagInfo = TFB_findTag(st, tag);
-		if(tagInfo > 0){
+		if(tag != TAG_CHECKER){
+			
 			tld.tag = tag;
 			tld.length = TLV_readLengthFix(snoop,sz);
-			tld.off = st->file.cur;
+			tld.offset = st->file.cur;
 			CB_addElement(&st->fifo, &tld);
+			
+			tagInfo = TFB_findTag(st, tag);
+			if(tagInfo > 0){
+				if(TFB_isTagHasChild(st, tag, tagInfo)){
+					st->file.cur += TLV_valueOffset(snoop, sz);
+					continue;
+				}
+			}
 		}
-		else return 0;
-		
-		if(TFB_isTagHasChild(st, tag, tagInfo))
-			st->file.cur += TLV_valueOffset(snoop, sz);
-		else
-			st->file.cur += TLV_nextTlvOffset(snoop, sz);
+		st->file.cur += TLV_nextTlvOffset(snoop, sz);
 	}
-
+	
+	if(ret)
+		return 0;
 	return 1;
 }
 
@@ -270,7 +273,7 @@ void TFB_nextTag(TFB_PARSER hd, TFB_TAG *nT)
 	}
 	CB_getElement(&st->fifo, &dTag);
 	nT->length = dTag.length;
-	nT->reff   = dTag.off;
+	nT->reff   = dTag.offset;
 	nT->tag    = dTag.tag;
 }
 
@@ -338,7 +341,7 @@ TFB_TAG TFB_setInside(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const u
 	TFB_TAG blank;
 	return blank;
 }
-
+/*
 TFB_TAG TFB_setBefore(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const uch *value)
 {
 	uch *need;
@@ -350,7 +353,7 @@ TFB_TAG TFB_setBefore(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const u
 	l = TLV_tlvByte(tag, length);
 	need = (uch *) Z_MALLOX(l);
 	TLV_writeTlv(0,tag,length,value,need);
-	VF_insert(need, l, reff->reff, 0, st->file.hdl);	// todo find out insert requirement
+	VF_insert(need, l, reff->reff, 0, st->file.hdl);	// todo: set before affect stack event pointer
 	Z_FREE(need);
 	
 	cur.tag = tag;
@@ -358,7 +361,7 @@ TFB_TAG TFB_setBefore(TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const u
 	cur.reff = reff->reff;
 	return cur;
 }
-
+*/
 TFB_TAG TFB_setAfter (TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const uch *value)
 {
 	uch *need;
@@ -370,10 +373,17 @@ TFB_TAG TFB_setAfter (TFB_PARSER hdl, TFB_TAG *reff, int tag, int length,const u
 	j = TLV_tlvByte(reff->tag, reff->length);
 	need = (uch *) Z_MALLOX(l);
 	TLV_writeTlv(0,tag,length,value,need);
-	VF_insert(need, l, reff->reff + j,0,st->file.hdl);
-	Z_FREE(need);
+	if(reff->tag != TAG_PROLOG){
+		VF_insert(need, l, reff->reff + j,0,st->file.hdl);
+		cur.reff = reff->reff + j;
+	}
+	else{
+		// reff->reff  must equal to st->anchor.dSeg
+		VF_insert(need, l, reff->reff, 0,st->file.hdl);
+		cur.reff = 0;
+	}
 	
-	cur.reff = reff->reff + j;
+	Z_FREE(need);
 	cur.tag = tag;
 	cur.length = length;
 	return cur;

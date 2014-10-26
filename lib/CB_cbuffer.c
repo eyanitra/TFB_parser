@@ -109,16 +109,27 @@ unsigned char CB_getElement(CB_HDL *hd, void *element)
 	return 1;
 }
 
+void CB_removeElements(CB_HDL *hdlBuffer)
+{
+	handle *hdl = (handle *)hdlBuffer->rsc;
+	hdl->next = hdl->first;
+	hdl->isEmpty = 1;
+}
+
 int CB_curSize(CB_HDL *hd)
 {
 	int c; 
 	long t;
 	
 	handle *hdl = (handle*)hd->rsc;
-	if(hdl->next > hdl->first)
-		t = hdl->next - hdl->first;
-	else
-		t = hdl->bSize - hdl->first + hdl->next;
+	if(!hdl->isEmpty){
+		if(hdl->next > hdl->first)
+			t = hdl->next - hdl->first;
+		else
+			t = hdl->bSize - hdl->first + hdl->next;
+	}
+	else t = 0;
+		
 	for(c = 0; t > 0; ++c){
 		t -= hdl->lSize;
 	}

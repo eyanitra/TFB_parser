@@ -17,6 +17,8 @@ unsigned char CB_addElement(CB_HDL *hdlBuffer,const void *element);
 
 unsigned char CB_getElement(CB_HDL *hdlBuffer, void *element);
 
+void CB_removeElements(CB_HDL *hdlBuffer);
+
 int CB_curSize(CB_HDL *hdlBuffer);
 
 void CB_clear(CB_HDL *handleTobeCleared);
