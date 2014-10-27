@@ -3,7 +3,12 @@
 
 #include "VF_file.h"
 
-typedef unsigned char uint8;
+#ifndef _EFT30_
+	typedef unsigned char uint8;
+#else
+#	include "proto.h"
+#endif
+
 typedef int TFB_REFF;
 
 #define TAG_CLOSING		1

@@ -16,10 +16,8 @@ extern "C" {
 
 // Compile selector for compile on TELIUM or standard GCC
 #ifdef _EFT30_
-#	ifdef DSC_LIB_COMPILE
-#		define COMPILE_CONVERSION
-#	endif
-#	include "DSCtraceDebug.h"
+#	define TRACE(arg...)
+#	define TRHEX(buffer, bufferLength)
 #else
 #	define TRACE(arg...)
 #	define TRHEX(buffer, bufferLength)
@@ -28,10 +26,6 @@ extern "C" {
 
 
 #include "DSC_bignum.h"
-
-#ifdef COMPILE_CONVERSION
-
-
 
 BIN_T dscBinaryOperatorCarry_AplusB(BIN_T *Result, BIN_T *OperandA, BIN_T *OperandB, unsigned int ByteLength)
 {
@@ -340,9 +334,6 @@ HEX dscNibbleOperator_RightShift(HEX *bufInput, HEX *bufOutput, int ByteLength)
 	}
 	return Carry;
 }
-
-
-#endif // end guard COMPILE_CONVERSION
 
 #ifdef __cplusplus
 }

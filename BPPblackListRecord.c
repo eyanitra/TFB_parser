@@ -1,6 +1,11 @@
 #include "BPPblackListRecord.h"
-#include <string.h>
 #include "DSC_converter.h"
+
+#ifdef _EFT30_
+#	include  "SDK30.h"
+#else
+#	include <string.h>
+#endif
 
 #define BL_CAN_COUNTER_BYTE			2
 #define BL_CAN_BYTE					8

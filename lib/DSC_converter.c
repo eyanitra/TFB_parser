@@ -1,5 +1,5 @@
 /******************************************************************************
- * 		DSCconversion.c
+ * 		DSC_converter.c
  *
  * 		Description: numerical conversion utility and operation
  *
@@ -14,13 +14,11 @@ extern "C" {
 
 // Compile selector for compile on TELIUM or standard GCC
 #ifdef _EFT30_
-#	ifdef DSC_LIB_COMPILE
-#		define COMPILE_CONVERSION
-#	endif
 #	include <SDK30.h>
-#	include "DSCtraceDebug.h"
 #	define Z_MALLOX(x)		umalloc(x)
 #	define Z_FREE(x)		ufree(x)
+#	define TRACE(arg...)
+#	define ASSERT(condition,arg...)
 #else
 #	define COMPILE_CONVERSION
 #	include <stdlib.h>
@@ -34,7 +32,6 @@ extern "C" {
 #include "DSC_converter.h"				//data type definition
 #include "DSC_bignum.h"
 
-#ifdef 	COMPILE_CONVERSION	// guard for direct debugging
 
 typedef unsigned char BCD_EL;
 extern HEX bnoDSCasciiAPlusB(HEX *strRslt, HEX *strOpA, HEX *strOpB, int flgStrLenA);
@@ -130,6 +127,33 @@ int dscBinaryToDecimalStr(BIN_T *bufBinary, STR_DEC *strDecimal, int ctrBinaryBu
 	strDecimal[ctrDecimalBufferLen] = 0;
 	Z_FREE(bufRoot);
 	return CNV_OK;
+}
+
+
+void dscBinary32ToDecimalStr(unsigned int bin, STR_DEC *strDec, int strDecLen)
+{
+	HEX *bufRoot, *bufOut;
+	unsigned int bitMask, valMask;
+
+	--strDecLen;
+	bufRoot = (HEX*) Z_MALLOX((strDecLen) << 1);
+	bufOut = &bufRoot[strDecLen];
+	memset(bufRoot, 0x30,  strDecLen << 1);
+	if(bin > 0){
+		bufRoot[strDecLen - 1] += 1;
+		for(bitMask = 1, valMask = (-1); bitMask != 0; bitMask <<= 1){
+			if(bin & bitMask)
+				bnoDSCasciiAPlusB(bufOut, bufOut, bufRoot, strDecLen);
+				
+			valMask ^= bitMask;
+			if((bnoDSCasciiAPlusB(bufRoot, bufRoot, bufRoot, strDecLen) != 0x30)||((valMask & bin) == 0))
+				break;	
+		}
+	}
+	memcpy(strDec,bufOut, strDecLen);
+	Z_FREE(bufRoot);
+ 	strDec[strDecLen] = 0;
+ 	 
 }
 
 // convert bufInput binary form to BCD numerical representation
@@ -240,6 +264,57 @@ int dscBinaryToHexStr(BIN_T *bufBinary, STR_HEX *strHexadecimal, int ctrBinaryLe
 	return CNV_OK;
 }
 
+// bufBinary must be in bigEndian format (MSB on lower address)
+void dscBinaryToHexStrX(const BIN_T *bufBinary, STR_HEX *strOut,  int strLenPlusOne)
+{
+	int ctrByte;
+	STR_HEX ctrLowNibble, ctrHighNibble;
+
+	if(strLenPlusOne <= 1)
+		return;
+	--strLenPlusOne;
+	strLenPlusOne >>= 1;
+	for(ctrByte = 0; ctrByte < strLenPlusOne; ctrByte++, bufBinary++)
+	{
+		ctrLowNibble = *bufBinary & 0xF;
+		ctrHighNibble = (*bufBinary & 0xF0) >> 4;
+
+		*strOut = dscCNVbinToAsciiToken(ctrHighNibble,cnv_uppercase);
+		strOut++;
+
+		*strOut = dscCNVbinToAsciiToken(ctrLowNibble, cnv_uppercase);
+		strOut++;
+	}
+
+	*strOut = 0;
+}
+
+// number must be in bigEndian format (MSB on lower address)
+void dscBinary32ToHexStrX(unsigned int number, STR_HEX *strOut, int strLenPlusOne)
+{
+	int i;
+	STR_HEX token;
+	unsigned int res;
+
+	if(strLenPlusOne <= 1)
+		return;
+	strLenPlusOne -= 2;
+
+	for(i = strLenPlusOne; ((number > 0)&&( i >= 0 )); --i ){
+		res = number & 0xF;
+		number >>= 4;
+		token = res;
+		strOut[i] = dscCNVbinToAsciiToken(token,cnv_uppercase);
+	}
+
+	while(i >= 0){
+		strOut[i--] = 0x30;
+	}
+
+	strOut[strLenPlusOne +1] = 0;
+}
+
+
 // convert ASCII numerical representation to BCD representation
 // ctrOutSize is length of output buffer,
 // in pad_none configuration, it will be changed to output size after conversion
@@ -327,6 +402,38 @@ int dscDecimalStrToBcd(STR_DEC *strInput, BCD_T *bufOutput, int *ctrOutSize, ATC
 	}
 
 	return CNV_OK;
+}
+
+// buffer size must at least half length of outDigit
+// if input string shorter than expected digit
+// output will be padded on front
+int dscDecimalStrToBcdX(const STR_DEC *strInput, BCD_T *out, int outDigit)
+{
+	int i;
+	BCD_T t, *h;
+
+	h = out;
+	for(i = 0; i < outDigit; ++i){
+		if(strInput[i] == 0)
+			break;
+		if((strInput[i] > 0x39)||(strInput[i] < 0x30))
+			return 1;
+
+		if(i & 1){
+			*h += (strInput[i] - 0x30);
+			++h;
+		}
+		else{
+			t = (strInput[i] - 0x30);
+			t <<= 4;
+			*h = t;
+		}
+	}
+	while(i < outDigit){
+		dscNibbleOperator_RightShift(out,out, outDigit << 1);
+		++i;
+	}
+	return 0;
 }
 
 // convert BCD form into ASCII decimal string
@@ -751,10 +858,6 @@ int dscHexStrToBinary(STR_HEX *strInput, BIN_T *bufOutput, int bufOutputSize)
 
 	return ctrNibble;
 }
-
-
-#endif // end guard COMPILE_CONVERSION
-
 
 #ifdef __cplusplus
 }

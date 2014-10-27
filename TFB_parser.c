@@ -4,7 +4,6 @@
 
 #ifdef _EFT30_
 #	include <SDK30.h>
-#	include "DSCtraceDebug.h"
 #	define Z_MALLOX(x)		umalloc(x)
 #	define Z_FREE(x)		ufree(x)
 #else

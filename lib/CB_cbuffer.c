@@ -1,7 +1,6 @@
 #include "CB_cbuffer.h"
 #ifdef _EFT30_
 #	include <SDK30.h>
-#	include "DSCtraceDebug.h"
 #   define Z_CPY(a,b,c)		memcpy(a, b, c)
 #	define Z_MALLOX(x)		umalloc(x)
 #	define Z_FREE(x)		ufree(x)

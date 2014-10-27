@@ -1,5 +1,5 @@
 /******************************************************************************
- * 	DSCconversion.h
+ * 	DSC_converter.h
  *
  * 		Description:
  *
@@ -107,6 +107,9 @@ typedef enum
 // ERR_CNV_MORE_BUFFER
 int dscBinaryToDecimalStr(BIN_T *bufBinary, STR_DEC *strDecimal, int ctrBinaryBufferLen, int ctrDecimalBufferLen);
 
+
+void dscBinary32ToDecimalStr(unsigned int number, STR_DEC *strDec, int strDecLen);
+
 // convert bufInput binary form to BCD numerical representation
 // bufInput must be in bigEndian format (MSB on lower address)
 // ctrOutByte initially tells size of bufOutput
@@ -123,6 +126,14 @@ int dscBinaryToBcd(BIN_T *bufInput, BCD_T *bufOutput, int ctrInByte, int *ctrOut
 // bufOutput or ctrOutByte must large enough to contain null pointer
 int dscBinaryToHexStr(BIN_T *bufInput, STR_HEX *strOutput, int ctrInByte, int *ctrOutByte, BTH_CFG flgConf);
 
+// always using uppercase
+// bufInput must be in bigEndian format (MSB on lower address)
+void dscBinaryToHexStrX(const BIN_T *bufBinary, STR_HEX *strOut,  int strLenPlusOne);
+
+// always using uppercase
+// number must be in bigEndian format (MSB on lower address)
+void dscBinary32ToHexStrX(unsigned int number, STR_HEX *strOut, int strLenPlusOne);
+
 // convert ASCII decimal string to BCD representation
 // ctrOutSize is length of output buffer,
 // in pad_none configuration, it will be changed to output size after conversion
@@ -135,6 +146,12 @@ int dscBinaryToHexStr(BIN_T *bufInput, STR_HEX *strOutput, int ctrInByte, int *c
 // ERR_CNV_INPUT
 // ERR_CNV_BCD_CONF
 int dscDecimalStrToBcd(STR_DEC *strInput, BCD_T *bufOutput, int *ctrOutSize, ATC_CFG flgConf);
+
+// buffer size must at least half length of outDigit
+// if input string shorter than expected digit
+// output will be padded on front
+int dscDecimalStrToBcdX(const STR_DEC *strInput, BCD_T *out, int outDigit);
+
 
 // convert ASCII decimal string to Binary form
 // Binary with bigEndian format, MSB on lower address

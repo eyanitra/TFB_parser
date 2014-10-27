@@ -1,6 +1,13 @@
 #include "BPP_blacklistControl.h"
 #include "DSC_converter.h"
 
+#ifdef _EFT30_
+#	include "SDK30.h"
+#else
+#	include <stdio.h>
+#	include <string.h>
+#endif
+
 ///////////// outside jurisdiction ///////////
 
 
@@ -9,7 +16,7 @@
 
 uch check[]="\x03\x0C\x09\x01\x31\x0E\x01\x31\x0F\x01\x31\x0B\x01\x30";
 
-uint8 blackListClear()
+uint8 BL_ClearFile()
 {
 	VF_FILE fhd;
 	VF_OFFSET sz;
@@ -23,7 +30,7 @@ uint8 blackListClear()
 	return !r;
 }
 
-uint8 blackListOpenFile_OK(TFB_PARSER *parser)
+uint8 BL_openFileOK(TFB_PARSER *parser)
 {
 	VF_FOLDER fold;
 	TFB_PARSER prs;
@@ -41,13 +48,13 @@ uint8 blackListOpenFile_OK(TFB_PARSER *parser)
 // for testing purpose
 extern void print8L(char *buffer, int bufferLength);
 
-uint32 blackListGetVersion()
+uint32 BL_getVersion()
 {
 	uint8 bl[BNI_PPC_NUMBER_BYTE_LEN], found = 0;
 	TFB_TAG el;
 	TFB_PARSER prs;
 
-	if(!blackListOpenFile_OK(&prs))
+	if(!BL_openFileOK(&prs))
 		return 0;
 		 
 	while(!TFB_isEmpty(prs)){
@@ -68,14 +75,14 @@ uint32 blackListGetVersion()
 	return 0;
 }
 
-uint8 blackListSetVersion(uint32 version)
+uint8 BL_setVersionOK(uint32 version)
 {
 	TFB_PARSER blf;
 	uch verbuf[BNI_PPC_NUMBER_BYTE_LEN];
 	TFB_TAG pr, now;
 	uint8 wr = 0;
 	
-	if(blackListOpenFile_OK(&blf))
+	if(BL_openFileOK(&blf))
 		return 0;
 		
 	dscBinary32ToBcd(version,(BCD_T*)verbuf,BNI_PPC_NUMBER_BYTE_LEN << 1);
@@ -97,20 +104,20 @@ uint8 blackListSetVersion(uint32 version)
 	return !wr;		
 }
 
-uint8 blackListIsElementExist(uch cardAppNumber[BNI_PPC_CAN_LEN])
+uint8 BL_isCardBlackListed(uch can[BNI_PPC_CAN_LEN], uch bdc)
 {
 	uch record[BLS_RECORD_LENGTH];
 	uint8 found = 0;
 	TFB_PARSER prs;
 	TFB_TAG el;
-	if(!blackListOpenFile_OK(&prs))
+	if(!BL_openFileOK(&prs))
 		return 0;
 		
 	while(!TFB_isEmpty(prs)){
 		TFB_nextTag(prs, &el);
 		if(el.tag == VALID_NODE_TAG){
 			TFB_getValue(prs, &el,record,sizeof(record));
-			if(isRecordedCan((char*)record,(char*)cardAppNumber)){
+			if(isRecordedCan((char*)record,(char*)can)){
 				found = 1;
 				break;
 			}
@@ -120,7 +127,7 @@ uint8 blackListIsElementExist(uch cardAppNumber[BNI_PPC_CAN_LEN])
 	return found;
 }
 
-uint8 blackListAddRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
+uint8 BL_addRecordOK(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 {
 	TFB_TAG t, f;
 	uch r[BLS_RECORD_LENGTH];
@@ -148,7 +155,7 @@ uint8 blackListAddRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 	return 0;
 }
 
-uint8 blackListDeleteRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
+uint8 BL_deleteRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 {
 	TFB_TAG t;
 	uch r[BLS_RECORD_LENGTH];
@@ -164,19 +171,19 @@ uint8 blackListDeleteRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
 	return 1;
 }
 
-uint8 blackListParseLine(uch raw[BLACK_LIST_RECORD_LENGTH])
+uint8 BL_parseRawRecord(uch raw[BLACK_LIST_RECORD_LENGTH])
 {
 	uch record[BLS_RECORD_LENGTH];
 	TFB_PARSER prs;
 	uint8 r;
 	
-	if(!blackListOpenFile_OK(&prs))
+	if(!BL_openFileOK(&prs))
 		return 0;
 	formatRecord((char*)record,(char*)raw);
 	if(!isDeleteCommand((char*)raw))
-		r = blackListAddRecord(prs,record);
+		r = BL_addRecordOK(prs,record);
 	else
-		r = blackListDeleteRecord(prs, record);
+		r = BL_deleteRecord(prs, record);
 	
 	TFB_close(prs);
 	return r;
