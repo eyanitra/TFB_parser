@@ -94,16 +94,16 @@ void test_4(){
 	printf("VF_open ret: %d\n",result);
 	printf("size : %d\n", (int)sz);
 	
-	result = VF_insert((uch*)"aaaaaaaa",8,16,0,hdl);
+	result = VF_insert((uch*)"aaaaaaaa",8,0,0,hdl);
 	printf("VF_insert ret: %d\n", result);
 	
-	result = VF_insert((uch*)"bbbbbbbb",8,24,0,hdl);
+	result = VF_insert((uch*)"bbbbbbbb",8,16,0,hdl);
 	printf("VF_insert ret: %d\n", result);
 	
-	result = VF_insert((uch*)"ffffffff",8,48,0,hdl);
+	result = VF_insert((uch*)"ffffffff",8,24,0,hdl);
 	printf("VF_insert ret: %d\n", result);
 	
-	result = VF_insert((uch*)"cccccccc",8,48,8,hdl);
+	result = VF_insert((uch*)"cccccccc",8,32,8,hdl);
 	printf("VF_insert ret: %d\n", result);
 	
 	VF_close(hdl);

@@ -70,8 +70,8 @@ void VF_copySegmentFile(int srcOffset, int length, FILE *trg, FILE *src)
 	fseek(src,(long int)srcOffset, SEEK_SET);
 	for(c= 0; c < length; c+= l){
 		l = sizeof(buf);
-		if(l > length)
-			l = length;
+		if(l > (length - c))
+			l = length - c;
 		fread(buf, sizeof(unsigned char), l,src);
 		fwrite(buf, sizeof(unsigned char), l, trg);
 	}
@@ -97,7 +97,7 @@ int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initia
 	size = fsize(c->hdl);
 	if(size < offset)
 		return 1;
-	temp = fopen(VF_TEMP_NAME,"w+b");
+	temp = tmpfile();
 	if(!temp)
 		return 1;
 	VF_copySegmentFile(0,offset,temp, c->hdl);
@@ -105,10 +105,13 @@ int VF_insert(const uch *byteIn, int inputByteSize, VF_OFFSET offset, int initia
 	if(size > (offset + initialLength))
 		VF_copySegmentFile(offset + initialLength,size - (offset+initialLength),temp, c->hdl);
 	
-	fclose(c->hdl);
+	freopen(c->fileName,"wb+",c->hdl);
+	rewind(c->hdl);
+	rewind(temp);
+	size = size - initialLength + inputByteSize;
+	VF_copySegmentFile(0, size, c->hdl,temp);
 	fclose(temp);
-	remove(c->fileName);
-	rename(VF_TEMP_NAME,c->fileName);
+	fclose(c->hdl);
 	c->hdl = 0;
 	
 	return 0;

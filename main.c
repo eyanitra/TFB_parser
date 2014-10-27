@@ -46,18 +46,20 @@ void pControlLine(){
 
 void testFile()
 {
+	test_5();
 	test_1();
 	test_2();
 	test_3();
 	test_4();
 	test_3();
-	test_5();
+	
 }
 
 int main(int argc, char **argv)
 {
 	
 	testPars_1();
+	//testFile();
 	// build control string
 	pControlLine();
 	// test blacklist
