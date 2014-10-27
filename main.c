@@ -4,7 +4,7 @@
 #include "BPPblackListRecord.h"
 #include "DSC_converter.h"
 #include "TLV_serializer.h"
-#include "BPP_blacklistControl.h"
+#include "BPPblacklistControl.h"
 
 extern void print8L(char *buffer, int bufferLength);
 extern void printCode(char *buffer, int bufferLength);
@@ -21,9 +21,9 @@ extern void testPars_1();
 void testing()
 {	
 	// todo complete testing here
-	blackListGetVersion();
-	blackListSetVersion((int)30);
-	blackListIsElementExist((uch*)"\x01\x02\x03\x04\x05\x06\x07\x08");
+	BL_getVersion();
+	BL_setVersionOK((int)30);
+	BL_isCardBlackListed((uch*)"\x01\x02\x03\x04\x05\x06\x07\x08", 0);
 }
 
 void pControlLine(){

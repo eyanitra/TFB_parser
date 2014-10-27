@@ -21,15 +21,14 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <File Name="main.c"/>
-    <File Name="TFB_parser.c"/>
-    <File Name="TFB_parser.h"/>
     <File Name="printer.c"/>
     <File Name="BPPblackListRecord.h"/>
     <File Name="BPPblackListRecord.c"/>
     <File Name="testFile.c"/>
-    <File Name="BPP_blacklistControl.c"/>
-    <File Name="BPP_blacklistControl.h"/>
     <File Name="testParser.c"/>
+    <File Name="BPPblacklistControl.c"/>
+    <File Name="BPPblacklistControl.h"/>
+    <File Name="testBlack.c"/>
   </VirtualDirectory>
   <VirtualDirectory Name="lib">
     <File Name="lib/DSC_bignum.c"/>
@@ -46,6 +45,8 @@
     <File Name="lib/TLV_serializer.h"/>
     <File Name="lib/CB_cbuffer.c"/>
     <File Name="lib/CB_cbuffer.h"/>
+    <File Name="lib/TFB_parser.c"/>
+    <File Name="lib/TFB_parser.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

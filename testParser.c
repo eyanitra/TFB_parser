@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "TFB_parser.h"
-#include "BPPblackListRecord.h"
-#include "DSC_converter.h"
-#include "TLV_serializer.h"
-#include "BPP_blacklistControl.h"
 
 
 #define PARSER_TFILE	"ulalalo"
@@ -78,23 +74,4 @@ void testPars_1()
 
 
 
-void testBl_1()
-{
-	TFB_PARSER parser;
-	uch cardAppNumber[BNI_PPC_CAN_LEN];
-	uch rec[BLS_RECORD_LENGTH];
-	
-	blackListOpenFile_OK(&parser);
-	//set value here
-	blackListIsElementExist(cardAppNumber);
-	blackListGetVersion();
-	
-	blackListSetVersion(3);
-	blackListGetVersion();
-	
-	blackListAddRecord(parser,	rec);
-	blackListIsElementExist(cardAppNumber);
-	
-	blackListDeleteRecord(parser, rec);
-	blackListIsElementExist(cardAppNumber);
-}
+
