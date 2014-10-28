@@ -7,6 +7,7 @@
 #ifndef _EFT30_
 	typedef int uint32;
 #else
+#	include "BPPsecurity.h"
 #	include "proto.h"
 #endif
 
@@ -16,14 +17,10 @@
 #define BL_VERSION_TAG			9
 #define VALID_NODE_TAG			11
 
-uint8 BL_ClearFile();
-uint8 BL_openFileOK(TFB_PARSER *parser);
+uint8   BL_ClearFile();
 uint32 BL_getVersion();
-uint8 BL_setVersionOK(uint32 version);
-uint8 BL_isCardBlackListed(uch cardAppNumber[BNI_PPC_CAN_LEN], uch bdc);
-uint8 BL_addRecordOK(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH]);
-uint8 BL_deleteRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH]);
-uint8 BL_parseRawRecord(uch raw[BLACK_LIST_RECORD_LENGTH]);
-
+uint8   BL_setVersionOK(uint32 version);
+uint8   BL_isCardBlackListed(uch cardAppNumber[BNI_PPC_CAN_LEN], uch bdc);
+uint8   BL_parseRawRecord(uch raw[BLACK_LIST_RECORD_LENGTH]);
 
 #endif
