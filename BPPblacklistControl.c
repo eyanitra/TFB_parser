@@ -3,6 +3,7 @@
 
 #ifdef _EFT30_
 #	include "SDK30.h"
+#	include "BPPsecurity.h"
 #else
 #	include <stdio.h>
 #	include <string.h>
@@ -37,9 +38,10 @@ uint8 BL_openFileOK(TFB_PARSER *parser)
 	
 	VF_folderDefaultOpen(&fold,"HOST");
 	prs = TFB_openFile("BNIPP_BL", fold);
-	
-	if(!TFB_isCoherence(prs,check))
-		return 0;
+
+	// don't check for now untill stable version
+	//if(!TFB_isCoherence(prs,check))
+	//	return 0;
 	
 	memcpy(parser, &prs, sizeof(TFB_PARSER));
 	return 1;
@@ -50,7 +52,7 @@ extern void print8L(char *buffer, int bufferLength);
 
 uint32 BL_getVersion()
 {
-	uint8 bl[BNI_PPC_NUMBER_BYTE_LEN], found = 0;
+	uint8 bl[NUMBER_BYTE_LEN], found = 0;
 	TFB_TAG el;
 	TFB_PARSER prs;
 
@@ -67,49 +69,47 @@ uint32 BL_getVersion()
 	}
 	
 	TFB_close(prs);	
-	if(found){
-		printf("version :");
-		print8L((char*)bl,sizeof(bl));
-		return dscBcdToBinary32((BCD_T*)bl,BNI_PPC_NUMBER_BYTE_LEN <<1);
-	}
+	if(found)
+		return dscBcdToBinary32((BCD_T*)bl,NUMBER_BYTE_LEN <<1);
 	return 0;
 }
 
 uint8 BL_setVersionOK(uint32 version)
 {
 	TFB_PARSER blf;
-	uch verbuf[BNI_PPC_NUMBER_BYTE_LEN];
-	TFB_TAG pr, now;
-	uint8 wr = 0;
+	uch verbuf[NUMBER_BYTE_LEN];
+	TFB_TAG prolog, now;
+	uint8 exist = 0;
 	
 	if(BL_openFileOK(&blf))
 		return 0;
 		
-	dscBinary32ToBcd(version,(BCD_T*)verbuf,BNI_PPC_NUMBER_BYTE_LEN << 1);
+	dscBinary32ToBcd(version,(BCD_T*)verbuf,NUMBER_BYTE_LEN << 1);
 	while(!TFB_isEmpty(blf)){
 		TFB_nextTag(blf, &now);
 		if(now.tag == TAG_PROLOG)
-			pr = now;
+			prolog = now;
 		if(now.tag == BL_VERSION_TAG){
-			TFB_setValue(blf, &now,verbuf,BNI_PPC_NUMBER_BYTE_LEN);
-			wr = 1;
+			TFB_setValue(blf, &now,verbuf, NUMBER_BYTE_LEN);
+			exist = 1;
 			break;
 		}
 	}
 	
-	if(!wr)
-		TFB_setAfter(blf, &pr,BL_VERSION_TAG, BNI_PPC_NUMBER_BYTE_LEN, verbuf);
+	if(!exist)
+		TFB_setAfter(blf, &prolog,BL_VERSION_TAG, NUMBER_BYTE_LEN, verbuf);
 	
 	TFB_close(blf);		
-	return !wr;		
+	return 1;		
 }
 
 uint8 BL_isCardBlackListed(uch can[BNI_PPC_CAN_LEN], uch bdc)
 {
-	uch record[BLS_RECORD_LENGTH];
+	unsigned char record[BL_FORMATTED_LENGTH];
 	uint8 found = 0;
 	TFB_PARSER prs;
 	TFB_TAG el;
+	
 	if(!BL_openFileOK(&prs))
 		return 0;
 		
@@ -117,7 +117,7 @@ uint8 BL_isCardBlackListed(uch can[BNI_PPC_CAN_LEN], uch bdc)
 		TFB_nextTag(prs, &el);
 		if(el.tag == VALID_NODE_TAG){
 			TFB_getValue(prs, &el,record,sizeof(record));
-			if(isRecordedCan((char*)record,(char*)can)){
+			if(BL_isRecordContainCan(record,(char*)can) && BL_isBdcMatch(record, bdc)){
 				found = 1;
 				break;
 			}
@@ -127,64 +127,68 @@ uint8 BL_isCardBlackListed(uch can[BNI_PPC_CAN_LEN], uch bdc)
 	return found;
 }
 
-uint8 BL_addRecordOK(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
+uint8 BL_addRecordOK(uch rec[BL_FORMATTED_LENGTH])
 {
-	TFB_TAG t, f;
-	uch r[BLS_RECORD_LENGTH];
+	TFB_PARSER p;
+	TFB_TAG t, last;
+
+	if(!BL_openFileOK(&p))
+		return 0;
 	
-	f.tag = 0; // f initially not a valid tag
+	last.tag = 0; // last initially not a valid tag
 	while(!TFB_isEmpty(p)){
 		TFB_nextTag(p, &t);
-		if(t.tag == VALID_NODE_TAG){
-			TFB_getValue(p, &t,r,sizeof(r));
-			if(isRecordOverlap((char*)r, (char*)rec))
-				return 1;
-			f = t;
+		if((t.tag == VALID_NODE_TAG)||(t.tag == BL_VERSION_TAG)){
+			last = t;
 			continue;
 		}
-		if((t.tag != VALID_NODE_TAG)&&(f.tag == VALID_NODE_TAG)){
-			TFB_setAfter(p, &f,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
-			return 1;
+		if((t.tag != VALID_NODE_TAG)&&(last.tag == VALID_NODE_TAG)){
+			break;
 		}
 	}
 	
-	if(t.tag == BL_VERSION_TAG){
-		TFB_setAfter(p, &t,VALID_NODE_TAG, BLS_RECORD_LENGTH,rec);
+	if((last.tag == BL_VERSION_TAG)||(last.tag == VALID_NODE_TAG)){
+		TFB_setAfter(p, &t,VALID_NODE_TAG, BL_FORMATTED_LENGTH,rec);
+		TFB_close(p);
 		return 1;
 	}
 	return 0;
 }
 
-uint8 BL_deleteRecord(TFB_PARSER p, uch rec[BLS_RECORD_LENGTH])
+uint8 BL_deleteRecordOK(uch rec[BL_FORMATTED_LENGTH])
 {
+	TFB_PARSER p;
 	TFB_TAG t;
-	uch r[BLS_RECORD_LENGTH];
+	uch recIn[BL_FORMATTED_LENGTH];
+
+	if(!BL_openFileOK(&p))
+		return 0;
+	
 	while(!TFB_isEmpty(p)){
 		TFB_nextTag(p, &t);
 		if(t.tag == VALID_NODE_TAG){
-			TFB_getValue(p, &t,r,sizeof(r));
-			if(isRecordOverlap((char*)r,(char*)rec)){
-				return TFB_clearTag(p, &t);
+			TFB_getValue(p, &t,recIn,sizeof(recIn));
+			if(BL_isRecordOverlap((char*)rec,(char*)recIn)){
+				TFB_clearTag(p, &t);
+				break;
 			}
 		}
 	}
+
+	TFB_close(p);
 	return 1;
 }
 
 uint8 BL_parseRawRecord(uch raw[BLACK_LIST_RECORD_LENGTH])
 {
-	uch record[BLS_RECORD_LENGTH];
-	TFB_PARSER prs;
+	uch record[BL_FORMATTED_LENGTH];
 	uint8 r;
 	
-	if(!BL_openFileOK(&prs))
-		return 0;
-	formatRecord((char*)record,(char*)raw);
-	if(!isDeleteCommand((char*)raw))
-		r = BL_addRecordOK(prs,record);
+	BL_formatRecord((char*)record,(char*)raw);
+	if(!BL_isDeleteCommand((char*)raw))
+		r = BL_addRecordOK(record);
 	else
-		r = BL_deleteRecord(prs, record);
+		r = BL_deleteRecordOK(record);
 	
-	TFB_close(prs);
 	return r;
 }

@@ -290,7 +290,7 @@ uint8 TFB_isEmpty(TFB_PARSER hd)
 
 uint8 TFB_clearTag(TFB_PARSER hdl, TFB_TAG *reff)
 {
-	return 0;
+	return 0;	// todo need VF_cut 
 }
 
 uint8 TFB_getValue(TFB_PARSER hdl, TFB_TAG *reff, uch *outBuffer, int bfLength)
@@ -397,3 +397,4 @@ void TFB_close(TFB_PARSER usedHandle){
 	Z_FREE(st);
 	usedHandle.rsc = 0;
 }
+

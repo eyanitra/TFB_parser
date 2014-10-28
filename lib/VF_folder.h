@@ -29,6 +29,9 @@ struct vffolderinfo_t{
 typedef struct vffolderinfo_t 	VF_FOLDER_INFO;
 typedef struct vffolder_t 		VF_FOLDER;
 
+#define DEFAULT_ROM_FOLDER_NAME		"HOST"
+#define DEFAULT_SWAP_FOLDER_NAME		"SYSTEM"
+
 int VF_folderDefaultOpen(VF_FOLDER *folder, const char *folderName);
 
 int VF_folderActivate(VF_FOLDER folder);
