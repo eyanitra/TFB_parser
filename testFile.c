@@ -14,23 +14,24 @@ void test_1(){
 	int result;
 	uch *testV;
 	
+	VF_folderDefaultOpen(&dummy,DEFAULT_ROM_FOLDER_NAME);
 	result = VF_open(dummy,TEST_F_NAME,&hdl,0);
 	printf("VF_open ret: %d\n",result);
 	
-	testV = (uch*) "00000000";
-	result = VF_write(testV,8,0,hdl);
+	testV = (uch*) "0000000000000000";
+	result = VF_write(testV,16,0,hdl);
 	printf("VF_write ret: %d\n",result);
 	
 	testV = (uch*) "11111111";
 	result = VF_write(testV,8,8,hdl);
 	printf("VF_write ret: %d\n",result);
 	
-	testV = (uch*) "22222222";
-	result = VF_write(testV,8,16,hdl);
+	testV = (uch*) "2222222222222222";
+	result = VF_write(testV,16,16,hdl);
 	printf("VF_write ret: %d\n",result);
 	
-	testV = (uch*) "33333333";
-	result = VF_write(testV,8,24,hdl);
+	testV = (uch*) "333333333333333333333333";
+	result = VF_write(testV,24,24,hdl);
 	printf("VF_write ret: %d\n",result);
 	
 	testV = (uch*) "44444444";
@@ -47,12 +48,12 @@ void test_2(){
 	VF_OFFSET sz;
 	int result;
 	//uch *testV;
-	
+	VF_folderDefaultOpen(&dummy,DEFAULT_ROM_FOLDER_NAME);
 	result = VF_open(dummy,TEST_F_NAME,&hdl,&sz);
 	printf("VF_open ret: %d\n",result);
 	printf("size : %d\n", (int)sz);
 	
-	result = VF_write((uch*)"55555555",8,sz,hdl);
+	result = VF_write((uch*)"55555555",8,sz-8,hdl);
 	printf("VF_write ret: %d\n",result);
 	
 	VF_close(hdl);
@@ -90,20 +91,24 @@ void test_4(){
 	VF_OFFSET sz;
 	int result;
 	
+	VF_folderDefaultOpen(&dummy,DEFAULT_ROM_FOLDER_NAME);
 	result = VF_open(dummy,TEST_F_NAME,&hdl, &sz);
 	printf("VF_open ret: %d\n",result);
 	printf("size : %d\n", (int)sz);
+  result = VF_insert((uch*)"xxxxxxxx",8,0,0,hdl);
 	
-	result = VF_insert((uch*)"aaaaaaaa",8,0,0,hdl);
+	result = VF_insert((uch*)"aaaaaaaa",8,0,8,hdl);
 	printf("VF_insert ret: %d\n", result);
 	
-	result = VF_insert((uch*)"bbbbbbbb",8,16,0,hdl);
+	result = VF_insert((uch*)"yyyyyyyy",8,8,0,hdl);
+
+	result = VF_insert((uch*)"bbbbbbbb",8,8,8,hdl);
 	printf("VF_insert ret: %d\n", result);
 	
-	result = VF_insert((uch*)"ffffffff",8,24,0,hdl);
+	result = VF_insert((uch*)"ffffffff",8,sz+16,0,hdl);
 	printf("VF_insert ret: %d\n", result);
 	
-	result = VF_insert((uch*)"cccccccc",8,32,8,hdl);
+	result = VF_insert((uch*)"cccccccc",8,sz+16,8,hdl);
 	printf("VF_insert ret: %d\n", result);
 	
 	VF_close(hdl);
@@ -111,5 +116,7 @@ void test_4(){
 
 void test_5(){
 	VF_FOLDER dummy;
+
+	VF_folderDefaultOpen(&dummy,DEFAULT_ROM_FOLDER_NAME);
 	VF_deleteClosed(dummy,TEST_F_NAME);
 }
