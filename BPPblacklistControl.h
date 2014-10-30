@@ -18,9 +18,9 @@
 #define VALID_NODE_TAG			11
 
 uint8   BL_ClearFile();
-uint32 BL_getVersion();
+uint32  BL_getVersion();
 uint8   BL_setVersionOK(uint32 version);
 uint8   BL_isCardBlackListed(uch cardAppNumber[BNI_PPC_CAN_LEN], uch bdc);
-uint8   BL_parseRawRecord(uch raw[BLACK_LIST_RECORD_LENGTH]);
+uint8   BL_parseRawRecord(const uch raw[BLACK_LIST_RECORD_LENGTH]);
 
 #endif

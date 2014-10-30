@@ -81,7 +81,7 @@ uint8 BL_setVersionOK(uint32 version)
 	TFB_TAG prolog, now;
 	uint8 exist = 0;
 	
-	if(BL_openFileOK(&blf))
+	if(!BL_openFileOK(&blf))
 		return 0;
 		
 	dscBinary32ToBcd(version,(BCD_T*)verbuf,NUMBER_BYTE_LEN << 1);
@@ -179,7 +179,7 @@ uint8 BL_deleteRecordOK(uch rec[BL_FORMATTED_LENGTH])
 	return 1;
 }
 
-uint8 BL_parseRawRecord(uch raw[BLACK_LIST_RECORD_LENGTH])
+uint8 BL_parseRawRecord(const uch raw[BLACK_LIST_RECORD_LENGTH])
 {
 	uch record[BL_FORMATTED_LENGTH];
 	uint8 r;

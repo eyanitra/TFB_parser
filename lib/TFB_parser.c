@@ -214,26 +214,25 @@ uint8 TFB_isCoherence(TFB_PARSER handle, const uch *checker)
 
 static uint8 TFB_fillBuffOk(XRES *st)
 {
-	uch snoop[8];
+	uch snoop[8], add = 0;
 	int sz, tagInfo, ret;
 	L_FIFO tld;
 	unsigned int tag;	
 	// if first encounter add PROLOG
-	if((st->file.cur == 0)&& CB_isEmpty(&st->fifo)){
-		if(st->ancor.fProlog == 0){
-			tld.tag = TAG_PROLOG;
-			tld.length = 0;
-			tld.offset = st->ancor.dSeg;
-			CB_addElement(&st->fifo,&tld);
-		}
-		st->ancor.fProlog = 1;	
+	if(st->ancor.fProlog == 0){
+		tld.tag = TAG_PROLOG;
+		tld.length = 0;
+		tld.offset = st->ancor.dSeg;
+		CB_addElement(&st->fifo,&tld);
+		++add;
+		st->ancor.fProlog = 1;
 	}
 	
 	while(!CB_isFull(&st->fifo)){
 		sz = sizeof(snoop);
 		ret = VF_read(snoop,&sz,st->file.cur,st->file.hdl);
 		if((sz == 0)||(ret))
-			break;	// todo: add end of file tag?
+			break;
 		tag = TLV_readTag(snoop, sz);
 		if(tag != TAG_CHECKER){
 			
@@ -241,6 +240,7 @@ static uint8 TFB_fillBuffOk(XRES *st)
 			tld.length = TLV_readLengthFix(snoop,sz);
 			tld.offset = st->file.cur;
 			CB_addElement(&st->fifo, &tld);
+			++add;
 			
 			tagInfo = TFB_findTag(st, tag);
 			if(tagInfo > 0){
@@ -252,10 +252,10 @@ static uint8 TFB_fillBuffOk(XRES *st)
 		}
 		st->file.cur += TLV_nextTlvOffset(snoop, sz);
 	}
-	
-	if(ret)
-		return 0;
-	return 1;
+
+	if(add)
+		return 1;
+	return 0;
 }
 
 void TFB_nextTag(TFB_PARSER hd, TFB_TAG *nT)

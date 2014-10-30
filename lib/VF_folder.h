@@ -1,7 +1,7 @@
 #ifndef VF_TFB_FOLDER
 #define VF_TFB_FOLDER
 
-typedef unsigned char uch;
+#include "DSC_converter.h"
 
 #define VF_FOLDER_TOKEN_LENGTH		32
 

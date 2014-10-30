@@ -824,7 +824,7 @@ unsigned char ConvertSingleByteHexAsciiToBcd(unsigned char AsciiCode){
 // CNV_OK
 // ERR_CNV_INPUT
 // ERR_CNV_MORE_BUFFER
-int dscHexStrToBinary(STR_HEX *strInput, BIN_T *bufOutput, int bufOutputSize)
+int dscHexStrToBinary(const STR_HEX *strInput, BIN_T *bufOutput, int bufOutputSize)
 {
 	STR_HEX BinaryValue;
 	int ctrNibble,i;

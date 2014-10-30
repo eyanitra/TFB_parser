@@ -13,6 +13,7 @@
 #ifndef _DSC_CONVERSION_H_
 #define _DSC_CONVERSION_H_
 
+typedef unsigned char uch;
 typedef unsigned char STR_DEC;	// token for decimal ASCII string representation
 typedef unsigned char BCD_T;	// token for Binary coded decimal
 typedef unsigned char BIN_T;	// token for native binary code/ Hexadecimal representation
@@ -196,6 +197,6 @@ void dscBinary32ToBcd(unsigned int InputNumber, BCD_T *BcdOutput, int BcdDigit);
 // bufOutput byte length and ctrOutSize at least (strInput length/2)+1
 // function will check minimum size of ctrOutSize
 // return output length
-int dscHexStrToBinary(STR_HEX *strInput, BIN_T *bufOutput, int bufOutputSize);
+int dscHexStrToBinary(const STR_HEX *strInput, BIN_T *bufOutput, int bufOutputSize);
 
 #endif	//end _RSD_TIME_COUNTER_H_ guard
